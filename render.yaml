@@ -1,0 +1,37 @@
+# Render Blueprint: the API. The web client deploys separately on Vercel (see DEPLOYMENT.md).
+# Secrets are marked sync:false, so Render asks for them in the dashboard instead of reading them from git.
+services:
+  - type: web
+    name: fieldforce-api
+    runtime: docker
+    dockerContext: ./backend
+    dockerfilePath: ./backend/Dockerfile
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: DEMO_MODE
+        value: "true"
+      - key: PROVIDER_MODE
+        value: live
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGINS
+        sync: false            # e.g. https://fieldforce-ai.vercel.app (comma-separated, no trailing slash)
+      - key: DATABASE_URL
+        value: sqlite:////tmp/fieldforce.db
+      - key: AUDIO_STORAGE_DIR
+        value: /tmp/audio
+      - key: GNANI_API_KEY
+        sync: false
+      - key: GNANI_DAILY_CALL_BUDGET
+        value: "300"
+      - key: AZURE_OPENAI_ENDPOINT
+        sync: false
+      - key: AZURE_OPENAI_API_KEY
+        sync: false
+      - key: AZURE_OPENAI_DEPLOYMENT
+        sync: false
+      - key: AZURE_OPENAI_API_VERSION
+        value: "2024-10-21"

@@ -1,0 +1,39 @@
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Node
+node_modules/
+dist/
+build/
+.vite/
+
+# Android / Capacitor generated
+**/android/.gradle/
+**/android/build/
+**/android/app/build/
+**/android/local.properties
+**/android/capacitor-cordova-android-plugins/
+**/android/app/src/main/assets/public/
+
+# Data and media
+data/
+*.wav
+*.m4a
+*.aac
+*.webm
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
