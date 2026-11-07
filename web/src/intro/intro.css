@@ -1,0 +1,5 @@
+.intro { position: fixed; inset: 0; z-index: 9999; background: var(--paper, #f5f3ed); overflow: hidden; touch-action: none; will-change: opacity; }
+.intro-canvas { position: absolute; left: 0; top: 0; width: 100vw; height: 100vh; height: 100dvh; display: block; }
+.intro-ui { position: absolute; left: 0; right: 0; bottom: max(9vh, calc(env(safe-area-inset-bottom) + 48px)); display: grid; justify-items: center; gap: 14px; opacity: var(--ui, 0); z-index: 1; }
+.intro-track { width: min(180px, 46vw); height: 2px; background: rgba(17,17,17,.1); border-radius: 2px; overflow: hidden; }
+.intro-track span { display: block; height: 100%; background: var(--red, #d7282f);  transform-origin: left; transform: scaleX(0); }

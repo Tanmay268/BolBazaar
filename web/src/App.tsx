@@ -5,6 +5,7 @@ import { Login } from "./Login";
 import { ManagerApp } from "./manager/ManagerApp";
 import { RepApp } from "./rep/RepApp";
 import type { User } from "./types";
+import { Intro } from "./intro/Intro";
 
 function useOnline() {
   const [online, setOnline] = useState(navigator.onLine);
@@ -30,5 +31,12 @@ function Root() {
 }
 
 export default function App() {
-  return <I18nProvider><Root /></I18nProvider>;
+  const [intro, setIntro] = useState(true);
+  useEffect(() => { document.getElementById("boot")?.remove(); }, []);
+  return (
+    <I18nProvider>
+      <Root />
+      {intro && <Intro onDone={() => setIntro(false)} />}
+    </I18nProvider>
+  );
 }
