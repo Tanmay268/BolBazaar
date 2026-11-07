@@ -8,6 +8,7 @@ import type { User } from "./types";
 const DEMO = [
   { user: "asha", label: "Asha", sub: "Field executive", icon: "mic" },
   { user: "meera", label: "Meera", sub: "Area manager", icon: "chart" },
+  { user: "recruiter", label: "Admin", sub: "View only", icon: "flag" },
 ];
 
 export function Login({ onLogin }: { onLogin: (user: User) => void }) {

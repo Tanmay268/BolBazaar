@@ -25,7 +25,7 @@ from .guard import GuardMiddleware, SlidingWindowLimiter
 from .models import Base
 from .providers.base import Providers
 from .providers.factory import build_providers
-from .seed import seed_demo
+from .seed import ensure_demo_accounts, seed_demo
 from .services.accounts import AccountService
 from .services.bugs import BugService
 from .services.captures import CaptureService
@@ -47,7 +47,8 @@ def create_app(settings: Settings | None = None, providers: Providers | None = N
     for warning in settings.warnings():
         LOGGER.warning("security_config %s", warning)
     if settings.seed_demo_data and (settings.app_env == "development" or settings.demo_mode):
-        seed_demo(sf, password=settings.demo_password)
+        seed_demo(sf, password=settings.demo_password, admin_password=settings.admin_password or None)
+        ensure_demo_accounts(sf, settings.demo_password, settings.admin_password or None)
     store = AudioStore(settings.audio_storage_dir)
     store.purge_older_than(settings.audio_retention_hours)
     providers = providers or build_providers(settings)

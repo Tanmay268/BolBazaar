@@ -23,6 +23,8 @@ services:
         sync: false            # Neon connection string, e.g. postgresql://user:pass@ep-xxx.neon.tech/neondb?sslmode=require
       - key: ALLOW_SIGNUP
         value: "true"
+      - key: ADMIN_PASSWORD
+        sync: false            # private password for the real `admin` account; reviewers use the view-only `recruiter` account
       - key: MANAGER_SIGNUP_CODE
         sync: false            # managers must enter this code to sign up; leave empty to close manager sign-up
       - key: AUDIO_STORAGE_DIR

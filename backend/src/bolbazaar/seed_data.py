@@ -8,6 +8,9 @@ from .domain.draft import Catalog, CustomerRef, ProductRef
 
 DEMO_PASSWORD = "demo123"
 
+# Accounts that may look but not change anything. Enforced for every non-GET request in api/deps.py.
+READONLY_USER_IDS = frozenset({"usr_recruiter"})
+
 TERRITORIES = [
     {"id": "ter_delhi", "name": "Delhi NCR"},
     {"id": "ter_chennai", "name": "Chennai"},
@@ -20,6 +23,8 @@ USERS = [
     {"id": "usr_priya", "username": "priya", "name": "Priya Kulkarni", "role": "rep", "territory_id": "ter_pune"},
     {"id": "usr_meera", "username": "meera", "name": "Meera Nair", "role": "manager", "territory_id": None},
     {"id": "usr_admin", "username": "admin", "name": "Admin", "role": "admin", "territory_id": None},
+    # Public, view-only admin for reviewers: sees the admin screens, cannot change or switch anything.
+    {"id": "usr_recruiter", "username": "recruiter", "name": "Recruiter (view only)", "role": "admin", "territory_id": None},
 ]
 
 # id, name, aliases, base_unit, units_per_pack, price_paise

@@ -1,4 +1,4 @@
-import { defineConfig, type Plugin } from "vite";
+import { defineConfig, loadEnv, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import { existsSync, readFileSync } from "node:fs";
 
@@ -25,7 +25,9 @@ function apkDownload(): Plugin {
   };
 }
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [react(), apkDownload()],
   server: { port: 5173, host: true },
-});
+  // The Capacitor bundle is built with `--mode app`, which would skip .env.production; take the API URL from it.
+  define: mode === "app" ? { "import.meta.env.VITE_API_URL": JSON.stringify(loadEnv("production", process.cwd(), "VITE_").VITE_API_URL ?? "") } : {},
+}));

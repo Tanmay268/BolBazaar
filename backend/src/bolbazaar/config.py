@@ -30,6 +30,8 @@ class Settings(BaseSettings):
     demo_mode: bool = False
     # Password given to the seeded demo accounts. The default is public; set DEMO_PASSWORD for any shared deployment.
     demo_password: str = "demo123"
+    # Private password for the real `admin` account. The demo accounts (rep, manager, view-only recruiter) stay public.
+    admin_password: str = ""
     # Serve /docs, /redoc and /openapi.json. Empty means: only when APP_ENV=development.
     expose_docs: str = ""
 
@@ -172,6 +174,8 @@ class Settings(BaseSettings):
         seeded = self.seed_demo_data and (self.app_env == "development" or self.demo_mode)
         if seeded and self.demo_password == "demo123":
             out.append("Demo accounts use the public default password (set DEMO_PASSWORD).")
+        if seeded and self.app_env != "development" and not self.admin_password:
+            out.append("ADMIN_PASSWORD is not set: the real admin account shares the public demo password.")
         if live and seeded and self.host not in LOOPBACK_HOSTS:
             out.append("Live providers are enabled while demo accounts exist and the server listens on a non-loopback host.")
         if live and self.allow_signup and not self.rep_signup_code:

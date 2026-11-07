@@ -15,6 +15,7 @@ from ..guard import SlidingWindowLimiter
 from ..models import User
 from ..providers.base import Providers
 from ..security import Principal, decode_token
+from ..seed_data import READONLY_USER_IDS
 from ..services.accounts import AccountService
 from ..services.bugs import BugService
 from ..services.captures import CaptureService
@@ -47,7 +48,7 @@ def get_state(request: Request) -> AppState:
 StateDep = Annotated[AppState, Depends(get_state)]
 
 
-def get_principal(state: StateDep, authorization: Annotated[str | None, Header()] = None) -> Principal:
+def get_principal(state: StateDep, request: Request, authorization: Annotated[str | None, Header()] = None) -> Principal:
     if not authorization or not authorization.lower().startswith("bearer "):
         raise ApiError(401, "AUTH_REQUIRED", "Sign in to continue")
     token = decode_token(state.settings, authorization[7:].strip())
@@ -60,6 +61,8 @@ def get_principal(state: StateDep, authorization: Annotated[str | None, Header()
         user = s.get(User, token.id)
     if user is None or not user.active or user.org_id != token.org_id:
         raise ApiError(401, "INVALID_TOKEN", "Sign in again")
+    if user.id in READONLY_USER_IDS and request.method not in ("GET", "HEAD", "OPTIONS"):
+        raise ApiError(403, "READ_ONLY_DEMO", "This demo account is view-only. Sign in as a rep or manager to make changes.")
     return Principal(user.id, user.org_id, user.role, user.territory_id, user.name)
 
 

@@ -13,7 +13,7 @@ from .models import (
     Base, Commitment, Customer, CustomerAlias, Order, OrderItem, Organization, Product, ProductAlias,
     Territory, User, Visit,
 )
-from .security import hash_password
+from .security import hash_password, verify_password
 from .seed_data import CUSTOMERS, DEMO_PASSWORD, PRODUCTS, TERRITORIES, USERS
 
 ORG_ID = "org_demo"
@@ -37,7 +37,8 @@ HISTORY = [
 OUTSTANDING = {"cus_sharma_gen": 1_250_000, "cus_khan": 800_000, "cus_gupta": 300_000}
 
 
-def seed_demo(sf: sessionmaker[Session], now: datetime | None = None, password: str = DEMO_PASSWORD) -> bool:
+def seed_demo(sf: sessionmaker[Session], now: datetime | None = None, password: str = DEMO_PASSWORD,
+              admin_password: str | None = None) -> bool:
     """Create demo data once. Returns False if the database already has an organisation."""
 
     now = now or datetime.now(timezone.utc)
@@ -50,8 +51,9 @@ def seed_demo(sf: sessionmaker[Session], now: datetime | None = None, password: 
             s.add(Territory(id=t["id"], org_id=ORG_ID, name=t["name"], manager_id="usr_meera"))
         s.flush()
         password_hash = hash_password(password)
+        admin_hash = hash_password(admin_password) if admin_password else password_hash
         for u in USERS:
-            s.add(User(org_id=ORG_ID, password_hash=password_hash, **u))
+            s.add(User(org_id=ORG_ID, password_hash=admin_hash if u["id"] == "usr_admin" else password_hash, **u))
         for pid, name, aliases, unit, pack, price in PRODUCTS:
             s.add(Product(id=pid, org_id=ORG_ID, name=name, base_unit=unit, units_per_pack=pack, price_paise=price,
                           aliases=[ProductAlias(alias=a) for a in aliases]))
@@ -90,6 +92,21 @@ def seed_demo(sf: sessionmaker[Session], now: datetime | None = None, password: 
                          action_type="payment_followup", description="Collect pending payment from Khan Mini Mart",
                          due_date=today - timedelta(days=5), priority="high"))
     return True
+
+
+def ensure_demo_accounts(sf: sessionmaker[Session], password: str, admin_password: str | None = None) -> None:
+    """Bring an already-seeded database up to date (seeding is skipped once an organisation exists):
+    add the view-only recruiter account and, when ADMIN_PASSWORD is set, give the real admin that private password."""
+
+    with sf.begin() as s:
+        if s.get(Organization, ORG_ID) is None:
+            return
+        for u in USERS:
+            if u["id"] == "usr_recruiter" and s.get(User, u["id"]) is None and s.scalar(select(User).where(User.username == u["username"])) is None:
+                s.add(User(org_id=ORG_ID, password_hash=hash_password(password), **u))
+        admin = s.get(User, "usr_admin")
+        if admin is not None and admin_password and not verify_password(admin_password, admin.password_hash):
+            admin.password_hash = hash_password(admin_password)
 
 
 def main() -> None:
