@@ -23,6 +23,7 @@ from .models import Base
 from .providers.base import Providers
 from .providers.factory import build_providers
 from .seed import seed_demo
+from .services.accounts import AccountService
 from .services.captures import CaptureService
 from .services.metrics import MetricsService
 from .services.records import RecordsService
@@ -48,7 +49,8 @@ def create_app(settings: Settings | None = None, providers: Providers | None = N
                   description="Voice-first visit, order and commitment capture. AI proposes; the application commits.")
     app.state.ctx = AppState(settings=settings, sf=sf, providers=providers, store=store,
                              captures=CaptureService(sf, providers, settings, store),
-                             metrics=MetricsService(sf, providers), records=RecordsService(sf))
+                             metrics=MetricsService(sf, providers), records=RecordsService(sf),
+                             accounts=AccountService(sf, settings))
     app.add_middleware(CORSMiddleware, allow_origins=[o.strip() for o in settings.cors_origins.split(",") if o.strip()],
                        allow_methods=["*"], allow_headers=["*"], expose_headers=["X-Request-Id"])
 

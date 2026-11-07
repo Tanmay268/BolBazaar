@@ -20,7 +20,11 @@ services:
       - key: CORS_ORIGINS
         sync: false            # e.g. https://bolbazaar.vercel.app (comma-separated, no trailing slash)
       - key: DATABASE_URL
-        value: sqlite:////tmp/bolbazaar.db
+        sync: false            # Neon connection string, e.g. postgresql://user:pass@ep-xxx.neon.tech/neondb?sslmode=require
+      - key: ALLOW_SIGNUP
+        value: "true"
+      - key: MANAGER_SIGNUP_CODE
+        sync: false            # managers must enter this code to sign up; leave empty to close manager sign-up
       - key: AUDIO_STORAGE_DIR
         value: /tmp/audio
       - key: GNANI_API_KEY

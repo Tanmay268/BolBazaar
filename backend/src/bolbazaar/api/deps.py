@@ -12,6 +12,7 @@ from ..config import Settings
 from ..errors import ApiError
 from ..providers.base import Providers
 from ..security import Principal, decode_token
+from ..services.accounts import AccountService
 from ..services.captures import CaptureService
 from ..services.metrics import MetricsService
 from ..services.records import RecordsService
@@ -27,6 +28,7 @@ class AppState:
     captures: CaptureService
     metrics: MetricsService
     records: RecordsService
+    accounts: AccountService
 
 
 def get_state(request: Request) -> AppState:

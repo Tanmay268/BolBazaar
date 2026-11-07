@@ -25,6 +25,15 @@ class LoginRequest(_Body):
     password: str
 
 
+class RegisterRequest(_Body):
+    username: str = Field(max_length=80)
+    name: str = Field(max_length=120)
+    password: str = Field(max_length=200)
+    role: Literal["rep", "manager"] = "rep"
+    territory_id: str | None = Field(None, alias="territoryId")
+    signup_code: str = Field("", alias="signupCode", max_length=200)
+
+
 class AnswerRequest(_Body):
     revision: int = Field(ge=1)
     answer: Any
@@ -59,11 +68,29 @@ def login(body: LoginRequest, state: StateDep):
         valid = verify_password(body.password, user.password_hash if user else "pbkdf2$1$x$00")
         if not user or not valid:
             raise ApiError(401, "INVALID_CREDENTIALS", "Wrong username or password")
-        org = s.get(Organization, user.org_id)
-        principal = Principal(user.id, user.org_id, user.role, user.territory_id, user.name)
-        return {"token": create_token(state.settings, principal),
-                "user": {"id": user.id, "name": user.name, "role": user.role, "territoryId": user.territory_id,
-                         "organization": org.name, "defaultLanguage": org.default_language}}
+        return _session(state, s, user)
+
+
+def _session(state: StateDep, s, user: User) -> dict[str, Any]:
+    org = s.get(Organization, user.org_id)
+    principal = Principal(user.id, user.org_id, user.role, user.territory_id, user.name)
+    return {"token": create_token(state.settings, principal),
+            "user": {"id": user.id, "name": user.name, "role": user.role, "territoryId": user.territory_id,
+                     "organization": org.name, "defaultLanguage": org.default_language}}
+
+
+@router.post("/auth/register", tags=["auth"], status_code=201)
+def register(body: RegisterRequest, state: StateDep):
+    user = state.accounts.register(username=body.username, name=body.name, password=body.password, role=body.role,
+                                   territory_id=body.territory_id, signup_code=body.signup_code)
+    with state.sf() as s:
+        return _session(state, s, user)
+
+
+@router.get("/auth/territories", tags=["auth"])
+def signup_territories(state: StateDep):
+    return {"territories": state.accounts.territories(), "managerSignup": bool(state.settings.manager_signup_code),
+            "signupOpen": state.settings.allow_signup}
 
 
 @router.get("/me", tags=["auth"])

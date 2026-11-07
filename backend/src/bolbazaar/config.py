@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 DEV_JWT_SECRET = "dev-only-secret-change-me"
@@ -24,6 +25,11 @@ class Settings(BaseSettings):
 
     jwt_secret: str = ""
     jwt_ttl_minutes: int = 720
+
+    # Self-service accounts. Managers can only sign up with this code; empty disables manager sign-up.
+    allow_signup: bool = True
+    manager_signup_code: str = ""
+    default_org_name: str = "BolBazaar Distributors"
 
     # offline | live. speech_mode / reasoner_mode override provider_mode independently.
     provider_mode: str = "offline"
@@ -54,6 +60,15 @@ class Settings(BaseSettings):
     audio_retention_hours: int = 24
     max_audio_bytes: int = 15 * 1024 * 1024
     max_audio_seconds: float = 120.0
+
+    @field_validator("database_url")
+    @classmethod
+    def _driver(cls, url: str) -> str:
+        """Hosted Postgres hands out postgres:// or postgresql:// URLs; SQLAlchemy needs the psycopg driver named."""
+        for prefix in ("postgres://", "postgresql://"):
+            if url.startswith(prefix):
+                return "postgresql+psycopg://" + url[len(prefix):]
+        return url
 
     @property
     def jwt_key(self) -> str:

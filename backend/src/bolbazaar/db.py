@@ -23,7 +23,8 @@ def make_engine(url: str) -> Engine:
             dbapi_connection.execute("PRAGMA foreign_keys=ON")
 
         return engine
-    return create_engine(url, pool_pre_ping=True)
+    # prepare_threshold=None keeps psycopg compatible with pooled (PgBouncer) endpoints such as Neon's -pooler host.
+    return create_engine(url, pool_pre_ping=True, connect_args={"prepare_threshold": None})
 
 
 def make_session_factory(engine: Engine) -> sessionmaker[Session]:

@@ -66,6 +66,16 @@ const en = {
   signIn: "Sign in",
   username: "Username",
   password: "Password",
+  createAccount: "Create account",
+  newHere: "New here? Create an account",
+  haveAccount: "Already registered? Sign in",
+  fullName: "Full name",
+  iAmA: "I am a",
+  roleRep: "Field executive",
+  roleManager: "Manager",
+  territory: "Territory",
+  managerCode: "Manager code",
+  passwordHint: "At least 8 characters",
 };
 export type Key = keyof typeof en;
 
@@ -135,6 +145,16 @@ const hinglish: Record<Key, string> = {
   signIn: "Sign in",
   username: "Username",
   password: "Password",
+  createAccount: "Account banao",
+  newHere: "Naye ho? Account banao",
+  haveAccount: "Account hai? Sign in karo",
+  fullName: "Poora naam",
+  iAmA: "Main hoon",
+  roleRep: "Field executive",
+  roleManager: "Manager",
+  territory: "Territory",
+  managerCode: "Manager code",
+  passwordHint: "Kam se kam 8 characters",
 };
 
 export type UiLang = "en" | "hinglish";

@@ -16,7 +16,8 @@ Status: configured and smoke-tested locally (production-mode boot, demo seeding,
 5. Check `https://<service>.onrender.com/health`; it reports `speech=live,reasoner=live`.
 
 Limits to know:
-- The free plan sleeps after inactivity (first request can take ~30–60 s) and its disk is ephemeral. The database is SQLite in `/tmp`, so **data resets on every restart or deploy**; the demo data reseeds automatically. Wake the service before a demo. For durable data use a Render Postgres instance and set `DATABASE_URL=postgresql+psycopg://…` (install with `pip install ".[postgres]"`; Postgres is untested here).
+- The free plan sleeps after inactivity (first request can take ~30–60 s); wake the service before a demo. The database is [Neon](https://neon.tech) Postgres (free tier, does not expire). Create a project, copy its connection string and enter it as `DATABASE_URL` in the Render dashboard (`postgres://` / `postgresql://` URLs are converted to the psycopg driver automatically; keep `?sslmode=require`). Tables are created on first start, and accounts and data survive restarts and deploys. Audio files stay on ephemeral disk and are purged after 24 h by design.
+- **Accounts:** anyone can sign up as a field executive (`ALLOW_SIGNUP=true`; set `false` to close it). Manager sign-up requires the `MANAGER_SIGNUP_CODE` you enter in the Render dashboard; leave it empty to disable. `DEMO_MODE=true` also seeds the demo organisation and the `demo123` demo users, so turn it off (and add your own catalogue) before real use.
 - `GNANI_DAILY_CALL_BUDGET` (300 on Render) is a hard stop that protects credits.
 - Keys live only in Render's environment, never in the web bundle.
 

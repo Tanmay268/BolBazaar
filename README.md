@@ -72,10 +72,14 @@ Backend (Python ≥ 3.11, [uv](https://docs.astral.sh/uv/), ffmpeg recommended f
 ```
 cd backend
 uv sync
-uv run pytest -q                 # 72 tests, no keys needed
-cp ../.env.example .env          # optional; defaults run offline
+uv run pytest -q                 # 81 tests, no keys needed
+cp ../.env.example .env          # optional; defaults run offline (SQLite)
 uv run bolbazaar-api            # http://localhost:8000  (docs at /docs)
 ```
+
+Optional local PostgreSQL (needs Docker): `docker compose up -d db`, then `uv sync --extra postgres` and set
+`DATABASE_URL=postgresql+psycopg://bolbazaar:bolbazaar@localhost:5432/bolbazaar` in `backend/.env`.
+Tables are created on startup. Users can create their own accounts from the sign-up screen.
 
 Web client (Node ≥ 20):
 

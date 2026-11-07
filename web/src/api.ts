@@ -40,7 +40,7 @@ async function request<T>(path: string, init: RequestInit = {}, extraHeaders: Re
   } catch {
     throw new ApiFailure(0, "NETWORK", "Can't reach the server. You may be offline.");
   }
-  if (response.status === 401 && path !== "/v1/auth/login") onUnauthorized();
+  if (response.status === 401 && !path.startsWith("/v1/auth/")) onUnauthorized();
   if (!response.ok) {
     let code = "HTTP_ERROR", message = `Request failed (${response.status})`, details: unknown;
     try {
@@ -59,6 +59,12 @@ export const newKey = () => (crypto.randomUUID ? crypto.randomUUID() : `k-${Date
 export const api = {
   login: (username: string, password: string) =>
     request<{ token: string; user: User }>("/v1/auth/login", { method: "POST", body: json({ username, password }) }),
+
+  register: (body: { username: string; name: string; password: string; role: "rep" | "manager"; territoryId?: string; signupCode?: string }) =>
+    request<{ token: string; user: User }>("/v1/auth/register", { method: "POST", body: json(body) }),
+
+  signupOptions: () =>
+    request<{ territories: { id: string; name: string }[]; managerSignup: boolean; signupOpen: boolean }>("/v1/auth/territories"),
 
   health: () => request<{ status: string; providers: string }>("/health"),
 
