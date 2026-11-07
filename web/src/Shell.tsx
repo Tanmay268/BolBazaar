@@ -15,15 +15,28 @@ export function AppBar({ onMenu, online }: { onMenu: () => void; online: boolean
 
 export interface NavItem { id: string; label: string; icon: string; badge?: number }
 
-export function BottomNav({ items, active, onSelect }: { items: NavItem[]; active: string; onSelect: (id: string) => void }) {
+export function BottomNav({ items, active, onSelect, center }: {
+  items: NavItem[]; active: string; onSelect: (id: string) => void; center?: { label: string; onClick: () => void };
+}) {
+  const half = Math.ceil(items.length / 2);
+  const tab = (item: NavItem) => (
+    <button key={item.id} className={`bnav-item ${active === item.id ? "on" : ""}`} onClick={() => onSelect(item.id)} aria-current={active === item.id ? "page" : undefined}>
+      <span className="bnav-ico"><Icon name={item.icon} size={22} />{!!item.badge && <i className="badge">{item.badge}</i>}</span>
+      <span>{item.label}</span>
+    </button>
+  );
   return (
-    <nav className="bnav" aria-label="Sections">
-      {items.map((item) => (
-        <button key={item.id} className={`bnav-item ${active === item.id ? "on" : ""}`} onClick={() => onSelect(item.id)} aria-current={active === item.id ? "page" : undefined}>
-          <span className="bnav-ico"><Icon name={item.icon} size={22} />{!!item.badge && <i className="badge">{item.badge}</i>}</span>
-          <span>{item.label}</span>
-        </button>
-      ))}
+    <nav className={`bnav ${center ? "bnav-mic" : ""}`} aria-label="Sections">
+      {items.slice(0, half).map(tab)}
+      {center && (
+        <div className="bnav-mic-slot">
+          <button className="mic-fab" onClick={center.onClick} aria-label={center.label}>
+            <span className="mic-ring" aria-hidden /><span className="mic-ring mic-ring-2" aria-hidden />
+            <span className="mic-core"><Icon name="mic" size={26} /></span>
+          </button>
+        </div>
+      )}
+      {items.slice(half).map(tab)}
     </nav>
   );
 }

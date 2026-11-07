@@ -13,7 +13,7 @@ export interface PendingCapture {
   createdAt: number;
 }
 
-const DB = "fieldforce";
+const DB = "bolbazaar";
 const STORE = "pending";
 
 function open(): Promise<IDBDatabase> {

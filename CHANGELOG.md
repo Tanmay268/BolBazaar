@@ -8,7 +8,7 @@ Format: newest first. Every iteration adds an entry.
 ### Changed
 - Whole web client restyled to the owner's design board (`docs/DESIGN.md`): ink-and-red on paper, heavy headlines, square blocks, outline icons, light theme only. Rep app: Today (storefront art, red visits block), Log a Visit (red orb: tap to record with pause/stop and clock, or press and hold), Review Visit (ruled list, Edit / Confirm), Visit Saved (red screen), Visits, Orders, More. Manager: black sidebar workspace (Overview, Ask, Visits, Orders, Promises, Retailers, Team) with an off-canvas drawer on phones.
 - Backend metrics gained real fields for the board's numbers: `visits30d` / `visitsPrev30d` (summary), `nextDueDate` (overdue payments), `orderValuePaise` (conversion by rep). 3 new tests (72 total).
-- Elements the board shows that have no data behind them were replaced honestly (see DESIGN.md): the GPS heatmap became a 28-day visit-activity grid; only the real 30-day visit delta is shown; "Visit Completion" is shown as order conversion; Reports and voice-Ask are omitted. The product name stays FieldForce AI and lives in `web/src/brand.tsx`.
+- Elements the board shows that have no data behind them were replaced honestly (see DESIGN.md): the GPS heatmap became a 28-day visit-activity grid; only the real 30-day visit delta is shown; "Visit Completion" is shown as order conversion; Reports and voice-Ask are omitted. The product name stays BolBazaar and lives in `web/src/brand.tsx`.
 ### Fixed
 - The orb's decorative ring covered the button and swallowed taps (found by driving the UI in headless Chrome).
 ### Verified

@@ -6,10 +6,10 @@ import wave
 import pytest
 from fastapi.testclient import TestClient
 
-from fieldforce.config import Settings
-from fieldforce.main import create_app
-from fieldforce.providers.base import Providers
-from fieldforce.providers.offline import OfflineReasoner, OfflineSTT, OfflineTTS
+from bolbazaar.config import Settings
+from bolbazaar.main import create_app
+from bolbazaar.providers.base import Providers
+from bolbazaar.providers.offline import OfflineReasoner, OfflineSTT, OfflineTTS
 
 
 def make_settings(tmp_path, **kw) -> Settings:

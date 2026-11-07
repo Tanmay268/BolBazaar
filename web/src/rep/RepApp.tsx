@@ -233,7 +233,7 @@ export function RepApp({ user, online, onSignOut }: { user: User; online: boolea
         {screen === "followups" && <FollowUps refreshKey={refreshKey} onBack={() => setScreen("more")} />}
         {screen === "more" && <More user={user} online={online} pending={pending} go={setScreen} onSignOut={signOut} />}
       </main>
-      <BottomNav active={nav} onSelect={(id) => setScreen(id as Screen)} items={[
+      <BottomNav active={nav} onSelect={(id) => setScreen(id as Screen)} center={{ label: t("logVisit"), onClick: () => setScreen("log") }} items={[
         { id: "today", label: t("tabToday"), icon: "home" },
         { id: "visits", label: t("tabVisits"), icon: "calendar" },
         { id: "orders", label: t("tabOrders"), icon: "box" },

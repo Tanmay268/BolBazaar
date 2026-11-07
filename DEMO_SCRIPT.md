@@ -15,7 +15,7 @@ Goal: show the whole loop (speak → verified draft → voice correction → con
 | 0:30–0:40 | Hold the correction bar: *"Parle-G pandrah kar do"* | Quantity 20 → 15, total recomputes. "Bina dubara record kiye." |
 | 0:40–0:48 | Tap **Confirm & save** | The spoken Hinglish confirmation plays (Gnani TTS). "AI propose karta hai, app commit karta hai." |
 | 0:48–0:58 | Switch to the manager window; press "Which retailers have overdue payments?" | Number tiles and the follow-up list already include this visit. "Jawab SQL se aata hai, LLM ke andaaze se nahi." |
-| 0:58–1:00 | Logo | "FieldForce AI." |
+| 0:58–1:00 | Logo | "BolBazaar." |
 
 **Offline beat (optional):** switch to airplane mode, record a short visit; the banner shows "1 recording waiting to upload". Turn the network on; it uploads with the stored Idempotency-Key and appears under "Waiting for you".
 

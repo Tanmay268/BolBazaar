@@ -9,4 +9,4 @@ RUN pip install .
 
 # Render injects PORT; the app reads PORT and HOST from the environment.
 EXPOSE 8000
-CMD ["fieldforce-api"]
+CMD ["bolbazaar-api"]

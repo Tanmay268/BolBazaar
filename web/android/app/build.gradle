@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace "ai.fieldforce.rep"
+    namespace "ai.bolbazaar.rep"
     compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "ai.fieldforce.rep"
+        applicationId "ai.bolbazaar.rep"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

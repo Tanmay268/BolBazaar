@@ -1,4 +1,4 @@
-# FieldForce AI
+# BolBazaar
 
 > A voice-first execution layer for field sales teams. A representative talks; the system turns the conversation into **verified** visits, orders, collections, complaints and follow-ups, and speaks the result back.
 
@@ -6,7 +6,7 @@
 
 ## The problem
 
-A rep visiting 15–20 retailers a day loses selling time to CRM data entry, forgets commitments, and gives managers a delayed, unreliable picture. FieldForce AI removes the form: the rep speaks naturally (Hindi/English/Hinglish and other Indian languages), corrects by voice, and confirms once.
+A rep visiting 15–20 retailers a day loses selling time to CRM data entry, forgets commitments, and gives managers a delayed, unreliable picture. BolBazaar removes the form: the rep speaks naturally (Hindi/English/Hinglish and other Indian languages), corrects by voice, and confirms once.
 
 ## What makes it different
 
@@ -74,7 +74,7 @@ cd backend
 uv sync
 uv run pytest -q                 # 72 tests, no keys needed
 cp ../.env.example .env          # optional; defaults run offline
-uv run fieldforce-api            # http://localhost:8000  (docs at /docs)
+uv run bolbazaar-api            # http://localhost:8000  (docs at /docs)
 ```
 
 Web client (Node ≥ 20):

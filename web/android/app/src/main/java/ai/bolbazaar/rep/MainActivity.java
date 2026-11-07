@@ -1,4 +1,4 @@
-package ai.fieldforce.rep;
+package ai.bolbazaar.rep;
 
 import com.getcapacitor.BridgeActivity;
 

@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">FieldForce AI</string>
-    <string name="title_activity_main">FieldForce AI</string>
-    <string name="package_name">ai.fieldforce.rep</string>
-    <string name="custom_url_scheme">ai.fieldforce.rep</string>
+    <string name="app_name">BolBazaar</string>
+    <string name="title_activity_main">BolBazaar</string>
+    <string name="package_name">ai.bolbazaar.rep</string>
+    <string name="custom_url_scheme">ai.bolbazaar.rep</string>
 </resources>

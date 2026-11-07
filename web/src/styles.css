@@ -81,6 +81,23 @@ button.list-row:active { background: var(--paper-2); }
 .bnav-item { display: grid; justify-items: center; gap: 3px; padding: 10px 4px 9px; font-size: .72rem; font-weight: 700; color: var(--ink); min-height: 58px; } .bnav-item.on { color: var(--red); }
 .bnav-ico { position: relative; display: grid; place-items: center; height: 24px; }
 
+/* centre mic button */
+.bnav-mic { grid-template-columns: 1fr 1fr 84px 1fr 1fr; position: relative; }
+.bnav-mic-slot { position: relative; display: grid; justify-items: center; }
+.mic-fab { position: absolute; top: -28px; width: 64px; height: 64px; display: grid; place-items: center; border-radius: 50%; color: #fff; transition: transform .18s cubic-bezier(.34,1.56,.64,1); animation: mic-float 3.2s ease-in-out infinite; }
+.mic-core { position: relative; z-index: 1; width: 64px; height: 64px; display: grid; place-items: center; border-radius: 50%; background: radial-gradient(circle at 30% 25%, #f0525a, var(--red) 55%, var(--red-ink)); border: 3px solid var(--paper); box-shadow: 0 0 0 2px var(--ink), 0 8px 18px rgba(215,40,47,.45); transition: box-shadow .18s; }
+.mic-core svg { animation: mic-nod 3.2s ease-in-out infinite; transform-origin: 50% 80%; }
+.mic-ring { position: absolute; inset: 0; border-radius: 50%; border: 2px solid var(--red); opacity: 0; animation: mic-pulse 2.4s ease-out infinite; }
+.mic-ring-2 { animation-delay: 1.2s; }
+.mic-fab:hover { transform: translateY(-3px) scale(1.06); }
+.mic-fab:hover .mic-core { box-shadow: 0 0 0 2px var(--ink), 0 12px 24px rgba(215,40,47,.55); }
+.mic-fab:active { transform: scale(.92); animation-play-state: paused; }
+.mic-fab:active .mic-core svg { animation: none; transform: scale(1.15); }
+@keyframes mic-pulse { 0% { transform: scale(1); opacity: .55; } 100% { transform: scale(1.75); opacity: 0; } }
+@keyframes mic-float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -3px; } }
+@keyframes mic-nod { 0%, 82%, 100% { transform: rotate(0); } 88% { transform: rotate(-12deg); } 94% { transform: rotate(10deg); } }
+@media (prefers-reduced-motion: reduce) { .mic-fab, .mic-core svg, .mic-ring { animation: none; } .mic-ring { display: none; } }
+
 /* ---------- home ---------- */
 .home { display: grid; gap: 14px; }
 .home-hero { position: relative; min-height: 190px; padding-top: 8px; overflow: hidden; }

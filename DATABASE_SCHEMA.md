@@ -1,6 +1,6 @@
 # Database Schema
 
-Implemented in [backend/src/fieldforce/models.py](backend/src/fieldforce/models.py) with SQLAlchemy 2.0 using portable types: SQLite for tests/local dev, PostgreSQL for deployment (ADR-002 amendment). ERD: [docs/architecture/database-erd.md](docs/architecture/database-erd.md). Tables are created with `create_all`; **Alembic migrations are not written yet** (see TASKS).
+Implemented in [backend/src/bolbazaar/models.py](backend/src/bolbazaar/models.py) with SQLAlchemy 2.0 using portable types: SQLite for tests/local dev, PostgreSQL for deployment (ADR-002 amendment). ERD: [docs/architecture/database-erd.md](docs/architecture/database-erd.md). Tables are created with `create_all`; **Alembic migrations are not written yet** (see TASKS).
 
 ## Conventions
 Prefixed text IDs (`cus_`, `prd_`, `cap_`…), `org_id` on tenant tables, money as `bigint` paise, UTC timestamps (a `UTCDateTime` type returns aware datetimes even on SQLite), audio stored on disk/object storage and referenced by key.

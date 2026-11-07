@@ -2,16 +2,16 @@ from datetime import date
 
 import pytest
 
-from fieldforce.domain.answers import interpret_answer
-from fieldforce.domain.dates import find_date_phrase, resolve_date_text
-from fieldforce.domain.draft import apply_ops, build_draft, validate
-from fieldforce.domain.normalize import normalize, replace_number_words
-from fieldforce.domain.resolution import resolve
-from fieldforce.domain.units import normalize_unit, unit_price
-from fieldforce.providers.base import ExtractionContext
-from fieldforce.providers.offline import DEMO_TRANSCRIPTS, OfflineReasoner
-from fieldforce.schemas_llm import PatchOp
-from fieldforce.seed_data import demo_catalog
+from bolbazaar.domain.answers import interpret_answer
+from bolbazaar.domain.dates import find_date_phrase, resolve_date_text
+from bolbazaar.domain.draft import apply_ops, build_draft, validate
+from bolbazaar.domain.normalize import normalize, replace_number_words
+from bolbazaar.domain.resolution import resolve
+from bolbazaar.domain.units import normalize_unit, unit_price
+from bolbazaar.providers.base import ExtractionContext
+from bolbazaar.providers.offline import DEMO_TRANSCRIPTS, OfflineReasoner
+from bolbazaar.schemas_llm import PatchOp
+from bolbazaar.seed_data import demo_catalog
 
 TODAY = date(2026, 11, 4)  # a Wednesday
 
@@ -139,7 +139,7 @@ def test_offline_patch_changes_quantity_and_removes_items():
     cat = demo_catalog(TODAY)
     ex = OfflineReasoner().extract(DEMO_TRANSCRIPTS["en-IN"], context(cat))
     draft = build_draft(ex, cat)
-    from fieldforce.domain.draft import llm_view
+    from bolbazaar.domain.draft import llm_view
     result = OfflineReasoner().patch(llm_view(draft), "make Maaza 10", context(cat))
     assert result.ops[0].path == "order.items.1.quantity" and result.ops[0].value == 10
     result = OfflineReasoner().patch(llm_view(draft), "remove Good Day", context(cat))

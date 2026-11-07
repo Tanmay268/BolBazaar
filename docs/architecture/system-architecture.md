@@ -6,7 +6,7 @@
 flowchart TB
   Rep["Field rep (Android / browser)"]
   Mgr["Sales manager (web dashboard)"]
-  FF["FieldForce AI platform"]
+  FF["BolBazaar platform"]
   Gnani["Gnani STT / TTS"]
   LLM["LLM provider"]
   Rep -- "voice, taps" --> FF

@@ -1,4 +1,4 @@
-"""Evaluation harness for FieldForce AI.
+"""Evaluation harness for BolBazaar.
 
     uv run python eval/run_eval.py                 # extraction accuracy + latency on eval/cases.json (Azure only)
     uv run python eval/run_eval.py --clips DIR     # also WER on DIR/*.wav with a DIR/<name>.txt reference (Gnani STT)
@@ -18,13 +18,13 @@ import time
 from datetime import date, timedelta
 from pathlib import Path
 
-from fieldforce.config import get_settings
-from fieldforce.domain.draft import build_draft, validate
-from fieldforce.domain.languages import get_profile
-from fieldforce.domain.normalize import normalize
-from fieldforce.providers.base import ExtractionContext, ProviderError
-from fieldforce.providers.offline import OfflineReasoner
-from fieldforce.seed_data import demo_catalog
+from bolbazaar.config import get_settings
+from bolbazaar.domain.draft import build_draft, validate
+from bolbazaar.domain.languages import get_profile
+from bolbazaar.domain.normalize import normalize
+from bolbazaar.providers.base import ExtractionContext, ProviderError
+from bolbazaar.providers.offline import OfflineReasoner
+from bolbazaar.seed_data import demo_catalog
 
 HERE = Path(__file__).parent
 MANUAL_ENTRY_SECONDS = 240  # assumption: typing one visit into a CRM form. Change with --manual-seconds.
@@ -78,7 +78,7 @@ def run_extraction(offline: bool) -> None:
     if offline:
         reasoner = OfflineReasoner()
     else:
-        from fieldforce.providers.azure import AzureReasoner
+        from bolbazaar.providers.azure import AzureReasoner
         reasoner = AzureReasoner(get_settings())
     cases = json.loads((HERE / "cases.json").read_text(encoding="utf-8"))
     totals: dict[str, list[bool]] = {}
@@ -112,7 +112,7 @@ def run_extraction(offline: bool) -> None:
         words = statistics.mean(len(c["text"].split()) for c in cases)
         speak = words / WORDS_PER_SECOND
         ours = speak + statistics.median(lat) + 2.0 + REVIEW_SECONDS  # +2s modelled STT
-        print(f"Modelled time per visit: {ours:.0f}s with FieldForce vs {MANUAL_ENTRY_SECONDS}s manual entry "
+        print(f"Modelled time per visit: {ours:.0f}s with BolBazaar vs {MANUAL_ENTRY_SECONDS}s manual entry "
               f"(assumptions: speak {words:.0f} words at {WORDS_PER_SECOND}/s, STT ~2s, review {REVIEW_SECONDS}s). Modelled, not measured with users.")
 
 
@@ -126,7 +126,7 @@ def wer(ref: list[str], hyp: list[str]) -> float:
 
 
 def run_clips(directory: Path, language: str) -> None:
-    from fieldforce.providers.gnani import GnaniClient, GnaniSTT
+    from bolbazaar.providers.gnani import GnaniClient, GnaniSTT
     stt = GnaniSTT(GnaniClient(get_settings()))
     profile = get_profile(language)
     rows = []

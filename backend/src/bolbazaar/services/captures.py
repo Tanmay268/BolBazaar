@@ -38,7 +38,7 @@ from ..schemas_llm import PatchOp
 from ..security import Principal
 from ..storage import AudioStore
 
-LOGGER = logging.getLogger("fieldforce.captures")
+LOGGER = logging.getLogger("bolbazaar.captures")
 KEY_RX = re.compile(r"[A-Za-z0-9._:-]{8,200}")
 EDITABLE = {"NEEDS_CLARIFICATION", "READY_FOR_REVIEW"}
 

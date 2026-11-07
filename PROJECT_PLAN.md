@@ -19,7 +19,7 @@ Field reps spend selling time on admin, lose commitments, and give managers stal
 | Voice banking assistant | Auth/fraud complexity; trust issues in a demo |
 | Legal aid triage | Needs domain-vetted content; hard to evaluate |
 | Citizen grievance filing by voice | Good fit, but less measurable than orders/tasks |
-| **FieldForce AI** | Measurable (extraction accuracy, time saved), demoable in one scenario, STT+TTS essential |
+| **BolBazaar** | Measurable (extraction accuracy, time saved), demoable in one scenario, STT+TTS essential |
 
 ### 1.4 Technical complexity
 Medium-high. The hard parts are reliable Hinglish extraction, entity resolution against a catalogue, conversational correction, and date normalisation. These are exactly what the evaluation set will measure.
@@ -52,7 +52,7 @@ Gate before each phase: working end-to-end behaviour is preferred over more feat
 
 ## 4. Design direction (deliberately unlike the reference app)
 
-The reference uses a light pastel, phone-framed screen with a glowing orb and bottom tabs. FieldForce AI uses a different information design:
+The reference uses a light pastel, phone-framed screen with a glowing orb and bottom tabs. BolBazaar uses a different information design:
 
 - **Conversation-first "visit thread"** instead of a single record button: the rep's transcript appears as a thread, and typed cards (Order, Collection, Complaint, Follow-up) assemble beneath it as the system extracts them. Cards show confidence and the source phrase.
 - **Dark, high-contrast "sunlight" theme** with large touch targets, built for outdoor/shop use; light theme optional.

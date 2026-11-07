@@ -2,7 +2,7 @@
 # Secrets are marked sync:false, so Render asks for them in the dashboard instead of reading them from git.
 services:
   - type: web
-    name: fieldforce-api
+    name: bolbazaar-api
     runtime: docker
     dockerContext: ./backend
     dockerfilePath: ./backend/Dockerfile
@@ -18,9 +18,9 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: CORS_ORIGINS
-        sync: false            # e.g. https://fieldforce-ai.vercel.app (comma-separated, no trailing slash)
+        sync: false            # e.g. https://bolbazaar.vercel.app (comma-separated, no trailing slash)
       - key: DATABASE_URL
-        value: sqlite:////tmp/fieldforce.db
+        value: sqlite:////tmp/bolbazaar.db
       - key: AUDIO_STORAGE_DIR
         value: /tmp/audio
       - key: GNANI_API_KEY

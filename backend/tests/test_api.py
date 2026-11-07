@@ -4,8 +4,8 @@ import pytest
 from fastapi.testclient import TestClient
 
 from conftest import offline_providers, tone_wav
-from fieldforce.models import Commitment, Order, Visit
-from fieldforce.providers.base import ProviderError
+from bolbazaar.models import Commitment, Order, Visit
+from bolbazaar.providers.base import ProviderError
 
 DEMO = ("Sharma ji ne aaj bees packet Parle-G liye aur das bottle Real juice kal dena hai. "
         "Woh paanch hazaar rupaye kal dega. Biscuit ke kuch packets damaged the, uski complaint hai. "

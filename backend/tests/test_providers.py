@@ -7,13 +7,13 @@ import wave
 import httpx
 import pytest
 
-from fieldforce.audio import prepare_wav_segments
-from fieldforce.config import Settings
-from fieldforce.domain.languages import get_profile
-from fieldforce.providers.azure import AzureReasoner
-from fieldforce.providers.base import ExtractionContext, ProviderError
-from fieldforce.providers.gnani import GnaniClient, GnaniSTT, GnaniTTS
-from fieldforce.schemas_llm import Extraction, PatchResult, strict_schema
+from bolbazaar.audio import prepare_wav_segments
+from bolbazaar.config import Settings
+from bolbazaar.domain.languages import get_profile
+from bolbazaar.providers.azure import AzureReasoner
+from bolbazaar.providers.base import ExtractionContext, ProviderError
+from bolbazaar.providers.gnani import GnaniClient, GnaniSTT, GnaniTTS
+from bolbazaar.schemas_llm import Extraction, PatchResult, strict_schema
 
 from datetime import date
 

@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     port: int = 8000
     app_base_url: str = "http://127.0.0.1:8000"
     cors_origins: str = "http://localhost:5173,http://localhost,https://localhost,capacitor://localhost"
-    database_url: str = "sqlite:///./data/fieldforce.db"
+    database_url: str = "sqlite:///./data/bolbazaar.db"
     seed_demo_data: bool = True
     # Seed the demo organisation outside development too (hackathon hosting). JWT_SECRET is still required.
     demo_mode: bool = False
