@@ -59,9 +59,6 @@ Edit responses (`answers`, `corrections`) add `patch: [{path, old, new}]` and `u
 
 **Confirm response:** `{captureId, visitId, orderId, orderTotalPaise, collectionIds, commitmentIds, customer, confirmationText, language, reply:{status: READY|FAILED|SKIPPED, url?}}`. A TTS failure never fails the request.
 
-## Call agent
-Payment-promise call agent (`/v1/calls`): `POST /calls` (start), `POST /calls/{id}/turns` (audio) and `/turns/text`, `GET /calls/{id}/turns/{idx}/audio`, `GET /calls`, `GET /calls/{id}`, `POST /calls/{id}/approve|reject|cancel`. Full contract, outcomes and flow: [CALL_AGENT.md](CALL_AGENT.md). New error codes: `NOTHING_DUE`, `CALL_NOT_FOUND`, `CALL_ENDED`, `CALL_CHANGED`, `INVALID_TURN`, `ALREADY_APPROVED`, `TURN_NOT_FOUND`.
-
 ## Error codes
 `AUTH_REQUIRED`, `INVALID_TOKEN`, `INVALID_CREDENTIALS`, `FORBIDDEN`, `VALIDATION_ERROR`, `IDEMPOTENCY_KEY_REQUIRED`, `IDEMPOTENCY_CONFLICT`, `STALE_REVISION`, `INVALID_STATE`, `NO_OPEN_QUESTION`, `ALREADY_COMMITTED`, `DRAFT_INVALID`, `UNSUPPORTED_LANGUAGE`, `UNSUPPORTED_AUDIO`, `AUDIO_TOO_LARGE`, `NO_SPEECH`, `PROVIDER_ERROR` (details: `stage`, `category`, `captureId`), `CAPTURE_NOT_FOUND`, `VISIT_NOT_FOUND`, `ORDER_NOT_FOUND`, `COMMITMENT_NOT_FOUND`, `INTERNAL_ERROR`.
 

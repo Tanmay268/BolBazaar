@@ -30,5 +30,5 @@ function Root() {
 }
 
 export default function App() {
-  return <I18nProvider><div className="ambient" aria-hidden /><Root /></I18nProvider>;
+  return <I18nProvider><Root /></I18nProvider>;
 }

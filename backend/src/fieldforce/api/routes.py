@@ -45,15 +45,6 @@ class CommitmentPatch(_Body):
     due_date: str | None = Field(None, alias="dueDate")
 
 
-class StartCallRequest(_Body):
-    customer_id: str = Field(alias="customerId")
-    language: str = "hinglish"
-
-
-class TurnRequest(_Body):
-    text: str = Field(min_length=1, max_length=1000)
-
-
 class AskRequest(_Body):
     text: str = Field(min_length=3, max_length=400)
 
@@ -239,52 +230,3 @@ def manager_declining(user: ManagerDep, state: StateDep, days: int = Query(30, g
 def manager_ask(body: AskRequest, user: ManagerDep, state: StateDep):
     return state.metrics.ask(user, body.text)
 
-
-# ------------------------------------------------------------------ call agent
-
-@router.post("/calls", status_code=201, tags=["calls"])
-def start_call(body: StartCallRequest, user: PrincipalDep, state: StateDep):
-    return state.calls.start(user, body.customer_id, body.language)
-
-
-@router.get("/calls", tags=["calls"])
-def list_calls(user: PrincipalDep, state: StateDep, limit: int = Query(20, ge=1, le=100)):
-    return {"calls": state.calls.list(user, limit)}
-
-
-@router.get("/calls/{call_id}", tags=["calls"])
-def get_call(call_id: str, user: PrincipalDep, state: StateDep):
-    return state.calls.get(user, call_id)
-
-
-@router.post("/calls/{call_id}/turns", tags=["calls"])
-def call_turn_audio(call_id: str, user: PrincipalDep, state: StateDep, audio: Annotated[UploadFile, File()]):
-    data = audio.file.read(state.settings.max_audio_bytes + 1)
-    require(data, 400, "EMPTY_AUDIO", "The recording is empty")
-    return state.calls.turn(user, call_id, audio=data, text=None)
-
-
-@router.post("/calls/{call_id}/turns/text", tags=["calls"])
-def call_turn_text(call_id: str, body: TurnRequest, user: PrincipalDep, state: StateDep):
-    return state.calls.turn(user, call_id, audio=None, text=body.text)
-
-
-@router.get("/calls/{call_id}/turns/{idx}/audio", tags=["calls"])
-def call_turn_audio_out(call_id: str, idx: int, user: PrincipalDep, state: StateDep):
-    data, content_type = state.calls.audio(user, call_id, idx)
-    return Response(data, media_type=content_type)
-
-
-@router.post("/calls/{call_id}/cancel", tags=["calls"])
-def cancel_call(call_id: str, user: PrincipalDep, state: StateDep):
-    return state.calls.cancel(user, call_id)
-
-
-@router.post("/calls/{call_id}/approve", tags=["calls"])
-def approve_call(call_id: str, user: PrincipalDep, state: StateDep):
-    return state.calls.approve(user, call_id)
-
-
-@router.post("/calls/{call_id}/reject", tags=["calls"])
-def reject_call(call_id: str, user: PrincipalDep, state: StateDep):
-    return state.calls.reject(user, call_id)

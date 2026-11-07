@@ -7,7 +7,7 @@ from datetime import date
 from typing import Any, Protocol
 
 from ..domain.languages import LanguageProfile
-from ..schemas_llm import CallReply, Extraction, ManagerQuery, PatchResult
+from ..schemas_llm import Extraction, ManagerQuery, PatchResult
 
 
 class ProviderError(RuntimeError):
@@ -45,18 +45,6 @@ class ExtractionContext:
     products: list[dict[str, Any]] = field(default_factory=list)   # {name, aliases}
 
 
-@dataclass
-class CallContext:
-    """What the model may know while classifying a retailer's reply. Never includes other customers' data."""
-
-    stage: str  # purpose | amount | date | confirm | callback
-    language: str
-    today: date
-    weekday: str
-    customer: str
-    outstanding_rupees: float
-
-
 class SpeechToText(Protocol):
     def transcribe(self, wav: bytes, profile: LanguageProfile) -> Transcript: ...
 
@@ -71,8 +59,6 @@ class Reasoner(Protocol):
     def patch(self, draft_view: dict[str, Any], utterance: str, context: ExtractionContext) -> PatchResult: ...
 
     def parse_manager_query(self, text: str) -> ManagerQuery: ...
-
-    def interpret_call_reply(self, text: str, context: CallContext) -> CallReply: ...
 
 
 @dataclass

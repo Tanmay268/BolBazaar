@@ -16,8 +16,8 @@ import httpx
 from pydantic import BaseModel, ValidationError
 
 from ..config import Settings
-from ..schemas_llm import CallReply, Extraction, MANAGER_INTENTS, ManagerQuery, PatchResult, strict_schema
-from .base import CallContext, ExtractionContext, ProviderError
+from ..schemas_llm import Extraction, MANAGER_INTENTS, ManagerQuery, PatchResult, strict_schema
+from .base import ExtractionContext, ProviderError
 
 M = TypeVar("M", bound=BaseModel)
 
@@ -51,19 +51,6 @@ Removable: order.items.N, collections.N, commitments.N, complaints.N (op=remove,
 Values: product is the spoken product name; quantity/amount are numbers; dates are YYYY-MM-DD or a
 phrase like 'next Monday'. Reference date: {today} ({weekday}). Anything that does not fit goes in
 unsupported, verbatim. Never guess an index; if unclear, put the request in unsupported."""
-
-CALL_SYSTEM = """You classify ONE reply from a retailer on a payment-reminder phone call. Do not write the agent's
-next line. Reference date: {today} ({weekday}). The retailer {customer} owes about Rs {outstanding}.
-The agent is currently at stage "{stage}" (purpose = just asked when they will pay, amount = asked how much,
-date = asked which date, confirm = asked "is that right?", callback = asked when to call back).
-Speech may be Hindi, English or Hinglish and may contain transcription errors. Classify intent as one of:
-will_pay (says they will pay, or just gives a date/amount in answer), partial_pay (will pay only part),
-already_paid, dispute (disagrees with the amount, bill or goods), call_later (busy / call back later),
-refuse, wrong_person, yes / no (only meaningful at the confirm stage), unclear.
-Rules: copy amounts as numbers in rupees only if stated (else null). Put the exact date phrase in date_text
-(for example "kal", "agle Monday"); set date (YYYY-MM-DD) only if the reference date lets you compute it with
-certainty, else null; "next week" or "month end" is NOT a certain date. note = a short paraphrase of any
-complaint or reason, else null. Never invent an amount or a date."""
 
 MANAGER_SYSTEM = (
     "Map the sales manager's question to exactly one intent from: " + ", ".join(MANAGER_INTENTS) +
@@ -142,7 +129,3 @@ class AzureReasoner:
     def parse_manager_query(self, text: str) -> ManagerQuery:
         return self._chat(MANAGER_SYSTEM, text, ManagerQuery, "manager_query")
 
-    def interpret_call_reply(self, text: str, context: CallContext) -> CallReply:
-        system = CALL_SYSTEM.format(today=context.today.isoformat(), weekday=context.weekday, customer=context.customer,
-                                    outstanding=f"{context.outstanding_rupees:,.0f}", stage=context.stage)
-        return self._chat(system, text, CallReply, "call_reply")

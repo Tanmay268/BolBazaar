@@ -47,7 +47,7 @@ Every end-to-end scenario runs on both targets (Android device, desktop browser)
 ```
 cd backend
 uv sync
-uv run pytest -q          # 96 tests, ~15 s, no network, no keys
+uv run pytest -q          # 72 tests, ~15 s, no network, no keys
 uv run python eval/run_eval.py            # live extraction evaluation (needs Azure keys)
 uv run python eval/run_eval.py --offline  # rule-based baseline, no keys
 uv run python eval/run_eval.py --clips DIR  # adds WER on DIR/<name>.wav + <name>.txt (spends Gnani calls)
@@ -69,12 +69,13 @@ Caveats: the cases were written by the developer who also tuned the prompt again
 ### Live checks done by hand (2026-11-04)
 One Gnani TTS call produced a 200 KB WAV; one STT call on that audio returned the transcript in about a second. The full API flow (capture → correction → confirm → spoken reply → manager views) ran on live providers. This used synthetic speech, not a human voice.
 
-### What the 96 tests cover today
+### What the 72 tests cover today
 | File | Covers |
 |---|---|
 | `tests/test_domain.py` | Normalisation, number words, date resolution (incl. ambiguity), units, fuzzy matching ties, draft build/validate/patch, offline extraction of the Hinglish and English demo transcripts, correction whitelist |
 | `tests/test_providers.py` | WAV splitting at silence, unsupported audio, Gnani request shapes (STT multipart, TTS JSON), retries and backoff, 402/401 handling with no secret leakage, daily budget stop, empty transcript, Azure strict schema, invalid-output rejection, Foundry route (all with mocked HTTP) |
 | `tests/test_calls.py` | Call state machine (dates never guessed, amount above balance rejected, partial payments, corrections, turn limit), offline classifier, scripts in 3 languages, full call API incl. approval creating the promise, no commitment before approval, scoping, metrics exclusion |
+| `tests/test_metrics_extra.py` | The manager numbers the UI shows: 30-day visit trend, next payment follow-up date per retailer, order value per rep |
 | `tests/test_api.py` | The 10-step demo scenario end to end; audio upload path; idempotent create and confirm; stale revisions; STT failure then retry; no-speech error; TTS failure after commit; **atomic rollback**; auth and role checks; rep/territory isolation; manager metrics and ask; commitment updates; error envelope |
 
 ### Honest limits of the current suite

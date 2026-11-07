@@ -9,12 +9,12 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from sqlalchemy import Select, and_, case, func, or_, select
+from sqlalchemy import Select, and_, case, func, select
 from sqlalchemy.orm import Session, sessionmaker
 
 from ..domain.dates import day_bounds_utc, today_in
 from ..errors import ApiError
-from ..models import PHONE_CALL, Commitment, Complaint, Customer, Order, OrderItem, Organization, Product, Territory, User, Visit
+from ..models import Commitment, Complaint, Customer, Order, OrderItem, Organization, Product, Territory, User, Visit
 from ..providers.base import ProviderError, Providers
 from ..security import Principal
 
@@ -25,10 +25,6 @@ SUPPORTED_QUESTIONS = [
     "Which representative has the best order conversion?",
     "Which products are declining?",
 ]
-
-
-def _is_field_visit():
-    return or_(Visit.purpose.is_(None), Visit.purpose != PHONE_CALL)
 
 
 def _rupees(paise: int) -> str:
@@ -63,7 +59,7 @@ class MetricsService:
             ter, tz, today = self._ctx(s, user)
             start, end = day_bounds_utc(tz, today)
             visits = s.scalar(self._scoped(select(func.count(Visit.id)).join(Customer, Visit.customer_id == Customer.id)
-                              .where(Visit.org_id == user.org_id, Visit.visited_at >= start, Visit.visited_at < end, _is_field_visit()), ter))
+                              .where(Visit.org_id == user.org_id, Visit.visited_at >= start, Visit.visited_at < end), ter))
             orders = s.execute(self._scoped(select(func.count(Order.id), func.coalesce(func.sum(Order.total_paise), 0))
                                .join(Customer, Order.customer_id == Customer.id)
                                .where(Order.org_id == user.org_id, Order.created_at >= start, Order.created_at < end), ter)).one()
@@ -72,13 +68,20 @@ class MetricsService:
             overdue = s.scalar(self._scoped(select(func.count(Commitment.id)).join(Customer, Commitment.customer_id == Customer.id)
                                .where(Commitment.org_id == user.org_id, Commitment.status == "open",
                                       Commitment.due_date < today), ter))
+            now = datetime.now(timezone.utc)
+            window = lambda a, b: s.scalar(self._scoped(  # noqa: E731 - small local helper
+                select(func.count(Visit.id)).join(Customer, Visit.customer_id == Customer.id)
+                .where(Visit.org_id == user.org_id, Visit.visited_at >= a, Visit.visited_at < b), ter))
+            visits_30d = window(now - timedelta(days=30), now + timedelta(days=1))
+            visits_prev_30d = window(now - timedelta(days=60), now - timedelta(days=30))
             outstanding = s.scalar(self._scoped(select(func.coalesce(func.sum(Customer.outstanding_paise), 0))
                                    .where(Customer.org_id == user.org_id), ter))
             complaints = s.scalar(self._scoped(select(func.count(Complaint.id)).join(Customer, Complaint.customer_id == Customer.id)
                                   .where(Complaint.status == "open", Customer.org_id == user.org_id), ter))
             return {"date": today.isoformat(), "visitsToday": visits, "ordersToday": orders[0],
                     "orderValueTodayPaise": int(orders[1]), "openCommitments": open_c,
-                    "overdueCommitments": overdue, "outstandingPaise": int(outstanding), "openComplaints": complaints}
+                    "overdueCommitments": overdue, "outstandingPaise": int(outstanding), "openComplaints": complaints,
+                    "visits30d": visits_30d, "visitsPrev30d": visits_prev_30d}
 
     def overdue_payments(self, user: Principal) -> list[dict[str, Any]]:
         with self.sf() as s:
@@ -88,12 +91,18 @@ class MetricsService:
                 .where(Commitment.org_id == user.org_id, Commitment.action_type == "payment_followup",
                        Commitment.status == "open", Commitment.due_date < today)
                 .group_by(Commitment.customer_id))}
+            next_due = {r[0]: r[1] for r in s.execute(
+                select(Commitment.customer_id, func.min(Commitment.due_date))
+                .where(Commitment.org_id == user.org_id, Commitment.action_type == "payment_followup",
+                       Commitment.status == "open")
+                .group_by(Commitment.customer_id))}
             rows = []
             for c in s.scalars(self._scoped(select(Customer).where(Customer.org_id == user.org_id, Customer.active.is_(True)), ter)):
                 count, oldest = followups.get(c.id, (0, None))
                 if c.outstanding_paise > 0 or count > 0:
                     rows.append({"customerId": c.id, "customer": c.name, "outstandingPaise": int(c.outstanding_paise),
-                                 "overdueFollowUps": count, "oldestDueDate": oldest.isoformat() if oldest else None})
+                                 "overdueFollowUps": count, "oldestDueDate": oldest.isoformat() if oldest else None,
+                                 "nextDueDate": next_due[c.id].isoformat() if c.id in next_due else None})
             return sorted(rows, key=lambda r: (-r["overdueFollowUps"], -r["outstandingPaise"]))
 
     def inactive_retailers(self, user: Principal, days: int = 30) -> list[dict[str, Any]]:
@@ -128,13 +137,15 @@ class MetricsService:
             ter, _tz, _today = self._ctx(s, user)
             since = datetime.now(timezone.utc) - timedelta(days=days)
             query = self._scoped(
-                select(User.id, User.name, func.count(func.distinct(Visit.id)), func.count(func.distinct(Order.visit_id)))
+                select(User.id, User.name, func.count(func.distinct(Visit.id)), func.count(func.distinct(Order.visit_id)),
+                       func.coalesce(func.sum(Order.total_paise), 0))
                 .join(Visit, Visit.rep_id == User.id)
                 .join(Customer, Visit.customer_id == Customer.id)
                 .outerjoin(Order, Order.visit_id == Visit.id)
-                .where(Visit.org_id == user.org_id, Visit.visited_at >= since, _is_field_visit()).group_by(User.id, User.name), ter)
+                .where(Visit.org_id == user.org_id, Visit.visited_at >= since).group_by(User.id, User.name), ter)
             rows = [{"repId": r[0], "rep": r[1], "visits": r[2], "visitsWithOrder": r[3],
-                     "conversionPct": round(100 * r[3] / r[2], 1) if r[2] else 0.0} for r in s.execute(query)]
+                     "conversionPct": round(100 * r[3] / r[2], 1) if r[2] else 0.0,
+                     "orderValuePaise": int(r[4])} for r in s.execute(query)]
             return sorted(rows, key=lambda r: -r["conversionPct"])
 
     def declining_products(self, user: Principal, days: int = 30) -> list[dict[str, Any]]:

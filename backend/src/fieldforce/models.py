@@ -12,9 +12,6 @@ from sqlalchemy import (
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
-PHONE_CALL = "phone_call"  # Visit.purpose for an approved call; metrics that count field visits exclude it
-
-
 def new_id(prefix: str) -> str:
     return f"{prefix}_{uuid.uuid4().hex[:16]}"
 
@@ -275,29 +272,3 @@ class AuditLog(Base):
     meta: Mapped[dict] = mapped_column(JSON, default=dict)
     occurred_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
 
-
-class CallSession(Base):
-    """One agent-led phone conversation. ``outcome`` is a proposal until a human approves it."""
-
-    __tablename__ = "call_sessions"
-    id: Mapped[str] = _pk("cal")
-    org_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
-    customer_id: Mapped[str] = mapped_column(ForeignKey("customers.id"), index=True)
-    started_by: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
-    language: Mapped[str] = mapped_column(String(16))
-    status: Mapped[str] = mapped_column(String(16), index=True)  # ACTIVE | NEEDS_REVIEW | APPROVED | REJECTED | CANCELLED
-    state: Mapped[dict] = mapped_column(JSON)
-    outcome: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
-    visit_id: Mapped[Optional[str]] = mapped_column(String(40), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
-    updated_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, onupdate=utcnow)
-
-
-class CallTurn(Base):
-    __tablename__ = "call_turns"
-    call_id: Mapped[str] = mapped_column(ForeignKey("call_sessions.id"), primary_key=True)
-    idx: Mapped[int] = mapped_column(Integer, primary_key=True)
-    role: Mapped[str] = mapped_column(String(10))  # agent | customer
-    text: Mapped[str] = mapped_column(Text)
-    meta: Mapped[dict] = mapped_column(JSON, default=dict)  # classified intent for customer turns
-    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)

@@ -109,12 +109,13 @@ export interface Commitment {
 export interface ManagerSummary {
   date: string; visitsToday: number; ordersToday: number; orderValueTodayPaise: number;
   openCommitments: number; overdueCommitments: number; outstandingPaise: number; openComplaints: number;
+  visits30d: number; visitsPrev30d: number;
 }
 
-export interface OverdueRow { customerId: string; customer: string; outstandingPaise: number; overdueFollowUps: number; oldestDueDate: string | null }
+export interface OverdueRow { customerId: string; customer: string; outstandingPaise: number; overdueFollowUps: number; oldestDueDate: string | null; nextDueDate: string | null }
 export interface InactiveRow { customerId: string; customer: string; lastOrderDate: string | null; daysSinceOrder: number | null }
 export interface PendingRow { repId: string; rep: string; open: number; overdue: number }
-export interface ConversionRow { repId: string; rep: string; visits: number; visitsWithOrder: number; conversionPct: number }
+export interface ConversionRow { repId: string; rep: string; visits: number; visitsWithOrder: number; conversionPct: number; orderValuePaise: number }
 export interface DecliningRow { productId: string; product: string; recentQty: number; priorQty: number; declinePct: number }
 
 export interface AskResult {
@@ -125,35 +126,10 @@ export interface AskResult {
   supportedQuestions?: string[];
 }
 
-export type CallStatus = "ACTIVE" | "NEEDS_REVIEW" | "APPROVED" | "REJECTED" | "CANCELLED";
-export type CallOutcomeType = "promise_to_pay" | "claims_paid" | "dispute" | "callback" | "refused" | "wrong_person" | "unresolved";
 
-export interface CallOutcome {
-  type: CallOutcomeType;
-  amountPaise?: number;
-  dueDate?: string;
-  amountAssumed?: boolean;
-  note?: string | null;
+export interface OrderRow {
+  id: string; status: string; totalPaise: number; deliveryDate: string | null; customer: string; createdAt: string;
+  items: { productId: string; product: string; quantity: number; unit: string; unitPricePaise: number; lineTotalPaise: number }[];
 }
 
-export interface CallTurnView { idx: number; role: "agent" | "customer"; text: string; audioUrl: string | null; intent: string | null }
-
-export interface CallView {
-  id: string;
-  status: CallStatus;
-  stage: string;
-  language: string;
-  customer: { id: string; name: string };
-  outstandingPaise: number;
-  turns: CallTurnView[];
-  outcome: CallOutcome | null;
-  visitId: string | null;
-  createdAt: string;
-}
-
-export interface CallSummary {
-  id: string; status: CallStatus; customer: string; customerId: string;
-  outcomeType: CallOutcomeType | null; amountPaise: number | null; dueDate: string | null; createdAt: string;
-}
-
-export interface CallApproval { callId: string; visitId: string; type: CallOutcomeType; commitmentIds: string[]; collectionIds: string[]; complaintIds: string[] }
+export interface CustomerRow { id: string; name: string; territoryId: string; outstandingPaise: number; aliases: string[] }

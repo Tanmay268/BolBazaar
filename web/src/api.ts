@@ -1,5 +1,5 @@
 import type {
-  AskResult, CallApproval, CallSummary, CallView, CaptureSummary, CaptureView, Commitment, Committed, ConversionRow, DecliningRow,
+  AskResult, CaptureSummary, CustomerRow, OrderRow, CaptureView, Commitment, Committed, ConversionRow, DecliningRow,
   InactiveRow, ManagerSummary, OverdueRow, PendingRow, User, VisitDetail, VisitRow,
 } from "./types";
 
@@ -100,19 +100,8 @@ export const api = {
   patchCommitment: (id: string, body: { status?: "open" | "done"; dueDate?: string }) =>
     request<Commitment>(`/v1/commitments/${id}`, { method: "PATCH", body: json(body) }),
 
-  startCall: (customerId: string, language: string) =>
-    request<CallView>("/v1/calls", { method: "POST", body: json({ customerId, language }) }),
-  getCall: (id: string) => request<CallView>(`/v1/calls/${id}`),
-  listCalls: (limit = 15) => request<{ calls: CallSummary[] }>(`/v1/calls?limit=${limit}`),
-  callTurnText: (id: string, text: string) => request<CallView>(`/v1/calls/${id}/turns/text`, { method: "POST", body: json({ text }) }),
-  callTurnAudio(id: string, audio: Blob) {
-    const form = new FormData();
-    form.set("audio", audio, "reply.wav");
-    return request<CallView>(`/v1/calls/${id}/turns`, { method: "POST", body: form });
-  },
-  cancelCall: (id: string) => request<CallView>(`/v1/calls/${id}/cancel`, { method: "POST" }),
-  approveCall: (id: string) => request<CallApproval>(`/v1/calls/${id}/approve`, { method: "POST" }),
-  rejectCall: (id: string) => request<CallView>(`/v1/calls/${id}/reject`, { method: "POST" }),
+  orders: (limit = 50) => request<{ orders: OrderRow[] }>(`/v1/orders?limit=${limit}`),
+  customers: () => request<{ customers: CustomerRow[] }>("/v1/customers"),
 
   managerSummary: () => request<ManagerSummary>("/v1/manager/summary"),
   overdue: () => request<{ rows: OverdueRow[] }>("/v1/manager/overdue-payments"),

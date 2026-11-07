@@ -108,17 +108,6 @@ class ManagerQuery(_Strict):
     days: Optional[int]
 
 
-class CallReply(_Strict):
-    """What a retailer said on a call, classified. The state machine in ``domain/calls.py`` decides what happens next."""
-
-    intent: Literal["will_pay", "partial_pay", "already_paid", "dispute", "call_later",
-                    "refuse", "wrong_person", "yes", "no", "unclear"]
-    amount_rupees: Optional[float]
-    date_text: Optional[str]
-    date: Optional[str]
-    note: Optional[str]
-
-
 def strict_schema(model: type[BaseModel]) -> dict[str, Any]:
     """JSON schema accepted by strict structured-output mode (closed objects, all required)."""
 

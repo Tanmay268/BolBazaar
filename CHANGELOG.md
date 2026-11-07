@@ -4,17 +4,23 @@ Format: newest first. Every iteration adds an entry.
 
 ## [Unreleased]
 
-## 2026-11-04 – Build iteration 6: call agent
-### Added
-- Payment-promise **call agent** (`CALL_AGENT.md`): deterministic state machine (`domain/calls.py`) over a strict-schema classifier of the retailer's reply (`CallReply`), lazy-cached Gnani TTS for each agent line, STT for audio replies, human approval before anything is filed. Endpoints under `/v1/calls`; models `CallSession`, `CallTurn`; offline and Azure `interpret_call_reply`.
-- Web: call screen (live transcript, agent voice with a credit-saving toggle, you play the retailer by voice, text or sample replies, outcome review card), rep Promises "Call" button and recent calls, manager Calls tab.
-- 27 call tests (96 total).
+## 2026-11-06 – Build iteration 7: redesign to the supplied design board
 ### Changed
-- Calls are stored as visits with purpose `phone_call`; visits-today and conversion metrics exclude them.
+- Whole web client restyled to the owner's design board (`docs/DESIGN.md`): ink-and-red on paper, heavy headlines, square blocks, outline icons, light theme only. Rep app: Today (storefront art, red visits block), Log a Visit (red orb: tap to record with pause/stop and clock, or press and hold), Review Visit (ruled list, Edit / Confirm), Visit Saved (red screen), Visits, Orders, More. Manager: black sidebar workspace (Overview, Ask, Visits, Orders, Promises, Retailers, Team) with an off-canvas drawer on phones.
+- Backend metrics gained real fields for the board's numbers: `visits30d` / `visitsPrev30d` (summary), `nextDueDate` (overdue payments), `orderValuePaise` (conversion by rep). 3 new tests (72 total).
+- Elements the board shows that have no data behind them were replaced honestly (see DESIGN.md): the GPS heatmap became a 28-day visit-activity grid; only the real 30-day visit delta is shown; "Visit Completion" is shown as order conversion; Reports and voice-Ask are omitted. The product name stays FieldForce AI and lives in `web/src/brand.tsx`.
+### Fixed
+- The orb's decorative ring covered the button and swallowed taps (found by driving the UI in headless Chrome).
 ### Verified
-- Live: 10 Hinglish replies classified by Azure; full browser flow on live Gnani TTS + Azure (call → confirm → outcome → approve → manager sees the filed call), no console errors.
-### Not verified / not built
-- Real phone calls: Gnani's published API has no telephony; a provider must be chosen (see CALL_AGENT.md). Streaming/low-latency turns, native-speaker review of the Hindi/Hinglish scripts, and regulatory sign-off for real outbound calls.
+- Headless Chrome against the live backend: tap-to-record with pause (clock freezes) and stop, sample visit → review → confirm → saved, all rep tabs, every manager page, drawer on phones, 390/360/768/1280/1440 widths, no horizontal overflow, no console errors beyond the expected 422 from a silent fake microphone. Screenshots in `docs/screenshots/`.
+### Not verified
+- Real speech through the mic, a physical phone, Safari/iOS. The Android APK predates this redesign and must be rebuilt.
+
+## 2026-11-06 – Scope decision: call agent dropped
+### Removed
+- The payment-promise call agent (built on 2026-11-05 as a browser-simulated call) and everything it touched: `/v1/calls` API, `CallSession`/`CallTurn` models, the call state machine and classifier methods, the web call screen, the Calls tab and Call buttons, `CALL_AGENT.md`, its tests (back to 69) and screenshots. The visit/conversion metric filter added for it was reverted.
+### Why
+- Gnani's published API has no telephony; the only documented alternative (Sarvam) is a competing speech vendor, which does not fit a Gnani hackathon entry, and onboarding risk was too high for the remaining time.
 
 ## 2026-11-04 – Build iteration 5: UI/UX redesign
 ### Changed

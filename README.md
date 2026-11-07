@@ -2,7 +2,7 @@
 
 > A voice-first execution layer for field sales teams. A representative talks; the system turns the conversation into **verified** visits, orders, collections, complaints and follow-ups, and speaks the result back.
 
-**Status: backend (96 tests), rep + manager web app, Android wrapper and evaluation harness are built; live Gnani and Azure calls have been exercised end to end.** Render/Vercel deployment is configured but not yet deployed. The status column below says what is real.
+**Status: backend (72 tests), rep + manager web app, Android wrapper and evaluation harness are built; live Gnani and Azure calls have been exercised end to end.** Render/Vercel deployment is configured but not yet deployed. The status column below says what is real.
 
 ## The problem
 
@@ -32,7 +32,6 @@ A rep visiting 15–20 retailers a day loses selling time to CRM data entry, for
 | C. Smart order management (catalogue-validated) | P0 | Done; prices recomputed server-side |
 | D. Commitment & follow-up engine | P0 | Done (extraction, due dates, complete/reschedule) |
 | E. Manager dashboard + copilot | P1 | Done (SQL metrics + intent-based ask; text questions only, no voice) |
-| G. Call agent (payment-promise follow-up calls) | P1 | Built as a browser-simulated call (you play the retailer): agent speaks with Gnani TTS, replies understood by Gnani STT + Azure, outcome approved by a human. **No real phone line**; see [CALL_AGENT.md](CALL_AGENT.md) |
 | F. Offline queue & sync | P1 | Done: IndexedDB queue replays `POST /captures` with stored idempotency keys. Transcription still needs a connection |
 
 ## Stack
@@ -58,7 +57,6 @@ Mobile-first, with a framed phone layout on desktop and a two-column manager wor
 | [TASKS.md](TASKS.md) | Done / pending / upcoming |
 | [CHANGELOG.md](CHANGELOG.md) | Change history |
 | [TESTING.md](TESTING.md) | Test and evaluation strategy |
-| [CALL_AGENT.md](CALL_AGENT.md) | Call agent plan, flow, API, going live |
 | [DEMO_SCRIPT.md](DEMO_SCRIPT.md) | 60-second demo |
 | [DEPLOYMENT.md](DEPLOYMENT.md) | Environments and deployment |
 | [docs/](docs/) | Deep-dive architecture, API reference, ADRs, screenshots |
@@ -74,7 +72,7 @@ Backend (Python ≥ 3.11, [uv](https://docs.astral.sh/uv/), ffmpeg recommended f
 ```
 cd backend
 uv sync
-uv run pytest -q                 # 96 tests, no keys needed
+uv run pytest -q                 # 72 tests, no keys needed
 cp ../.env.example .env          # optional; defaults run offline
 uv run fieldforce-api            # http://localhost:8000  (docs at /docs)
 ```

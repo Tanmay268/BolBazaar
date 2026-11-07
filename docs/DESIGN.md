@@ -1,22 +1,43 @@
 # Design notes
 
-## Principles
-1. **One next action.** The home screen leads with a single hero card and one button ("Log a visit"), then a few facts and whatever is waiting for the user. Nothing competes with the voice action.
-2. **The voice moment is the product.** A single large control, driven by the real microphone level (rings and waveform follow the input, not an animation loop), with a status line and a three-step progress read-out while it works (listening → understanding → matching).
-3. **Show what was understood, not a form.** The draft appears as cards, one per fact, each with a confidence signal and the phrase that was heard. Items the system is unsure about are highlighted and asked about inline, with the question also available as audio.
-4. **State-aware surfaces.** Waiting drafts, overdue promises and offline uploads surface as banners where the user already is, instead of being hidden in menus.
-5. **Mobile first, desktop framed.** A phone-sized column with a bottom bar (centre Talk button) is the baseline. On wider screens the rep app stays a framed phone-sized column; the manager dashboard becomes a two-column workspace.
-6. **Two voices of the UI.** The interface can be switched between English and Hinglish (header toggle); the language you *speak* in is chosen separately on the Talk screen.
-7. **Smoothness.** Skeletons instead of spinners for lists, staggered card entrance, haptic ticks on record/confirm, safe-area padding, 44 px touch targets, `prefers-reduced-motion` respected, light and dark themes.
+The interface follows a design board supplied by the project owner: an editorial, ink-and-red look on warm paper, with heavy headlines, hairline rules and square-edged blocks. Mobile comes first; the manager workspace opens into a sidebar layout from 900 px.
 
-## Visual language (original)
-- Palette: saffron → coral gradient on warm paper (light) or deep indigo-black (dark), with violet for informational states and green/amber/red for status.
-- Shapes: 20 px cards, pill chips, a ripple orb for the mic, gradient hero cards, sound-bar logo mark.
-- Type: system font stack (works offline and in the Android WebView), tight negative tracking on headings.
+## Tokens
+| | |
+|---|---|
+| Primary red | `#D7282F` |
+| Ink | `#111111` |
+| Paper | `#F5F3ED` (tiles `#ECE9E1`) |
+| Neutral | `#9A9A9A` |
+| Type | Helvetica Neue / Arial stack (headlines 800 weight, tight tracking), system sans for data; Devanagari falls back to Noto Sans Devanagari |
+| Icons | 24 px outline set, 1.8 stroke (`web/src/Icon.tsx`) |
+| Shape | square corners (3 px), 1.5–2 px ink rules, uppercase 11 px labels with wide tracking |
 
-## Reference and originality
-Early in the project a reference voice-ordering app was analysed read-only for general UX lessons (a phone-first column, a home that surfaces the next action, a single focal voice control, bottom navigation, switchable UI language, drill-down lists, banners for pending work). Only those general ideas informed this design. No code, copy, layout, colours, icons or assets were reused; the palette, orb, screens, navigation structure, data model and flows here are different and were built from scratch for field sales (visits, promises, manager copilot).
+Light theme only (the board defines no dark theme).
 
-## Screens
-Screenshots from a real run against the live backend are in `docs/screenshots/`:
-`landing-mobile`, `rep-today` (+ `-light`), `rep-listening`, `rep-draft`, `rep-saved`, `rep-desktop`, `manager-mobile`, `manager-ask`, `manager-desktop`.
+## Rep app (phone)
+1. **Today**: greeting with a line-art kirana storefront, a red "Today's visits" block, Follow-ups and Overdue tiles, a black "Log a Visit" button, waiting drafts and promises due. Bottom bar: Today · Visits · Orders · More.
+2. **Log a Visit**: a large red voice orb. Tap to record (with pause and stop, a live waveform from the real microphone level and a running clock) or press and hold to talk and release to send. A "Starting…" state shows while the microphone opens.
+3. **Review Visit**: a ruled list (what you said, retailer, order with expandable lines and total, delivery, payments, follow-ups). Rows that need an answer get a red edge; one inline question at a time, also available as audio. **Edit** opens spoken or typed correction. **Confirm** files it.
+4. **Visit Saved**: a full red screen with the check, the retailer, order value, follow-ups and an estimated time saved, then the spoken confirmation and "Log Another Visit".
+5. **More**: follow-ups, language (English / Hinglish), connection and upload queue, sign out.
+
+## Manager workspace
+Black sidebar (Overview, Ask, Visits, Orders, Promises, Retailers, Team) on desktop and an off-canvas drawer on phones. Overview: a red order-value block, three metrics, Overdue Payments, Team Performance and a Visit Activity grid. Ask: a single question box with suggestion chips and an answer block with a red rule. Visits, Orders, Promises, Retailers and Team are table pages over the existing API.
+
+## Where the board is matched and where it is not
+Matched: palette, typography, layout and hierarchy of every screen on the board, the voice screen controls, the red Saved screen, the sidebar and the overview grid.
+
+Different on purpose, because the data does not exist:
+- **Visit heatmap** → **Visit Activity**, a 28-day calendar grid from real visits. The app does not capture GPS, so there is no map.
+- **Trend deltas** (+12%, −6%, +6 pp): only the 30-day visit comparison is shown, computed from real history. Outstanding and conversion have no history, so they show no delta.
+- **Visit Completion** → **Order conversion** (visits that ended in an order), which is what the system measures.
+- **Zone dropdown and date picker** are shown as plain labels (organisation and today's date); managers are scoped by territory on the server.
+- **Reports** is omitted. **Voice input on Ask** is omitted: voice ask is not built.
+- **Wordmark**: the board shows another product name. This app keeps its own name, defined once in `web/src/brand.tsx`.
+
+## Originality
+All code, copy, the storefront drawing and the layout here were written for this project. A different reference app was studied earlier for general UX principles only.
+
+## Screenshots
+Real runs against the live backend are in `docs/screenshots/`: `landing-mobile`, `landing-desktop`, `rep-home`, `rep-record`, `rep-recording`, `rep-review`, `rep-saved`, `rep-orders`, `rep-desktop`, `manager-overview`, `manager-ask`, `manager-team`, `manager-mobile`, `manager-drawer`.

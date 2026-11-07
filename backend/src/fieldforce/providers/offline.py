@@ -20,10 +20,10 @@ from ..domain.dates import find_date_phrase
 from ..domain.languages import LanguageProfile
 from ..domain.normalize import first_number, normalize, replace_number_words
 from ..schemas_llm import (
-    CallReply, CollectionX, CommitmentX, CompetitorX, ComplaintX, CustomerX, Extraction, ItemX,
+    CollectionX, CommitmentX, CompetitorX, ComplaintX, CustomerX, Extraction, ItemX,
     ManagerQuery, OrderX, PatchOp, PatchResult, VisitX,
 )
-from .base import CallContext, ExtractionContext, Speech, Transcript
+from .base import ExtractionContext, Speech, Transcript
 
 DEMO_TRANSCRIPTS = {
     "hinglish": (
@@ -66,19 +66,6 @@ class OfflineTTS:
                     frames += struct.pack("<h", int(6000 * envelope * math.sin(2 * math.pi * freq * n / rate)))
             out.writeframes(bytes(frames))
         return Speech(audio=buf.getvalue(), content_type="audio/wav", model="offline:tts", voice="offline")
-
-
-# --------------------------------------------------------------------------- call replies
-
-_C_WRONG = re.compile(r"wrong number|galat number|you have the wrong|ye .{0,20} nahi hai", re.I)
-_C_PAID = re.compile(r"already|pehle hi|pehle de|de diya|de di|bhej diya|bhej di|kar diya|kar di|paid|transferred|ho gaya|ho chuka|ho chuki", re.I)
-_C_DISPUTE = re.compile(r"dispute|bill galat|galat bill|nahi banta|nahi bante|kharab|damaged|complaint|shikayat|credit note|wapas|not correct", re.I)
-_C_REFUSE = re.compile(r"nahi (dunga|dungi|denge|karunga|karenge)|won'?t pay|will not pay|not paying|refuse|\bmana\b", re.I)
-_C_LATER = re.compile(r"baad mein|baad me|call back|call later|\blater\b|busy|abhi nahi|dobara call|phir call", re.I)
-_C_PARTIAL = re.compile(r"\b(kuch|thoda|partial|aadha|half|part payment)\b", re.I)
-_C_WILL = re.compile(r"dunga|dungi|denge|karunga|karenge|kar dunga|kar denge|will pay|pay kar|bhej dunga|bhej denge|transfer", re.I)
-_C_YES = re.compile(r"\b(haan|han|ha|ji|yes|yeah|yep|theek|thik|sahi|correct|right|bilkul|ok|okay)\b", re.I)
-_C_NO = re.compile(r"\b(nahi|nahin|no|nope|galat|wrong)\b", re.I)
 
 
 # --------------------------------------------------------------------------- extraction
@@ -230,40 +217,6 @@ class OfflineReasoner:
             if phrase:
                 return PatchResult(ops=[PatchOp(op="set", path="order.deliveryDate", value=phrase)], unsupported=[])
         return PatchResult(ops=[], unsupported=[utterance])
-
-    def interpret_call_reply(self, text: str, context: CallContext) -> CallReply:
-        t = replace_number_words(text)
-        folded = normalize(t)
-        phrase = find_date_phrase(t)
-        money = _MONEY.search(t)
-        amount = float((money.group(1) or money.group(2)).replace(",", "")) if money else None
-        if amount is None and context.stage == "amount":
-            amount = first_number(folded)
-
-        def reply(intent: str, **kw: Any) -> CallReply:
-            return CallReply(intent=intent, amount_rupees=kw.get("amount"), date_text=kw.get("date"), date=None,
-                             note=kw.get("note"))
-
-        if _C_WRONG.search(t):
-            return reply("wrong_person")
-        if _C_PAID.search(t) and not _C_WILL.search(t):
-            return reply("already_paid", note=text.strip())
-        if _C_DISPUTE.search(t):
-            return reply("dispute", note=text.strip())
-        if _C_REFUSE.search(t):
-            return reply("refuse", note=text.strip())
-        if _C_LATER.search(t):
-            return reply("call_later", date=phrase)
-        if context.stage == "confirm" and phrase is None and amount is None:
-            if _C_NO.search(t) and not _C_YES.search(t):
-                return reply("no")
-            if _C_YES.search(t):
-                return reply("yes")
-        if _C_PARTIAL.search(t):
-            return reply("partial_pay", amount=amount, date=phrase)
-        if amount is not None or phrase or _C_WILL.search(t):
-            return reply("will_pay", amount=amount, date=phrase)
-        return reply("unclear")
 
     def parse_manager_query(self, text: str) -> ManagerQuery:
         t = normalize(text)

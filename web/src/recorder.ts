@@ -62,9 +62,13 @@ export class WavRecorder {
   private raf = 0;
   private startedAt = 0;
   private active = false;
+  private paused = false;
 
   get seconds() { return this.ctx ? this.frames / this.ctx.sampleRate : 0; }
   get recording() { return this.active; }
+  get isPaused() { return this.paused; }
+  pause() { if (this.active) this.paused = true; }
+  resume() { this.paused = false; }
 
   /** `onLevel` receives 0..1 roughly every animation frame; `onLimit` fires when MAX_SECONDS is reached. */
   async start(onLevel: (level: number) => void, onLimit: () => void): Promise<void> {
@@ -85,10 +89,11 @@ export class WavRecorder {
     this.processor = this.ctx.createScriptProcessor(4096, 1, 1);
     this.chunks = [];
     this.frames = 0;
+    this.paused = false;
     this.active = true;
     this.startedAt = performance.now();
     this.processor.onaudioprocess = (event) => {
-      if (!this.active) return;
+      if (!this.active || this.paused) return;
       const data = event.inputBuffer.getChannelData(0);
       this.chunks.push(new Float32Array(data));
       this.frames += data.length;
@@ -113,6 +118,7 @@ export class WavRecorder {
     const rate = this.ctx?.sampleRate ?? TARGET_RATE;
     const heldMs = performance.now() - this.startedAt;
     this.active = false;
+    this.paused = false;
     cancelAnimationFrame(this.raf);
     this.processor?.disconnect();
     this.source?.disconnect();
