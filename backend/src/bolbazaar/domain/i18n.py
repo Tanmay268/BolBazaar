@@ -1,6 +1,6 @@
 """Localised clarification questions and spoken confirmations.
 
-Strings for Hindi, Tamil and Marathi are first drafts and need native-speaker review
+Strings for every language except English and Hinglish are first drafts and need native-speaker review
 before any public demo.
 """
 
@@ -74,6 +74,84 @@ _Q: dict[str, dict[str, str]] = {
         "MISSING_AMOUNT": "रक्कम किती आहे?",
         "AMBIGUOUS_DATE": "{what} साठी कोणती तारीख?",
     },
+    "te-IN": {
+        "MISSING_CUSTOMER": "మీరు ఏ దుకాణాన్ని సందర్శించారు?",
+        "UNKNOWN_CUSTOMER": "\"{spoken}\" కనబడలేదు. మీరు ఏ దుకాణాన్ని సందర్శించారు?",
+        "AMBIGUOUS_CUSTOMER": "\"{spoken}\" అంటే ఏ దుకాణం?",
+        "AMBIGUOUS_PRODUCT": "\"{spoken}\" అంటే ఏ ఉత్పత్తి?",
+        "UNKNOWN_PRODUCT": "\"{spoken}\" జాబితాలో లేదు. ఏ ఉత్పత్తి?",
+        "NEW_PRODUCT_PRICE": "{item} ధర ఎంత?{unit}",
+        "NEW_PRODUCT_UNIT": "{item} ఏ యూనిట్‌లో అమ్ముతారు?",
+        "MISSING_QUANTITY": "{item} ఎంత కావాలి?",
+        "UNIT_MISMATCH": "{item} కి ఏ యూనిట్?",
+        "MISSING_AMOUNT": "చెల్లింపు మొత్తం ఎంత?",
+        "AMBIGUOUS_DATE": "{what} కి ఏ తేదీ?",
+    },
+    "kn-IN": {
+        "MISSING_CUSTOMER": "ನೀವು ಯಾವ ಅಂಗಡಿಗೆ ಭೇಟಿ ನೀಡಿದ್ದೀರಿ?",
+        "UNKNOWN_CUSTOMER": "\"{spoken}\" ಸಿಗಲಿಲ್ಲ. ನೀವು ಯಾವ ಅಂಗಡಿಗೆ ಭೇಟಿ ನೀಡಿದ್ದೀರಿ?",
+        "AMBIGUOUS_CUSTOMER": "\"{spoken}\" ಎಂದರೆ ಯಾವ ಅಂಗಡಿ?",
+        "AMBIGUOUS_PRODUCT": "\"{spoken}\" ಎಂದರೆ ಯಾವ ಉತ್ಪನ್ನ?",
+        "UNKNOWN_PRODUCT": "\"{spoken}\" ಪಟ್ಟಿಯಲ್ಲಿ ಇಲ್ಲ. ಯಾವ ಉತ್ಪನ್ನ?",
+        "NEW_PRODUCT_PRICE": "{item} ಬೆಲೆ ಎಷ್ಟು?{unit}",
+        "NEW_PRODUCT_UNIT": "{item} ಯಾವ ಘಟಕದಲ್ಲಿ ಮಾರಾಟವಾಗುತ್ತದೆ?",
+        "MISSING_QUANTITY": "{item} ಎಷ್ಟು ಬೇಕು?",
+        "UNIT_MISMATCH": "{item} ಗೆ ಯಾವ ಘಟಕ?",
+        "MISSING_AMOUNT": "ಪಾವತಿಯ ಮೊತ್ತ ಎಷ್ಟು?",
+        "AMBIGUOUS_DATE": "{what} ಗೆ ಯಾವ ದಿನಾಂಕ?",
+    },
+    "ml-IN": {
+        "MISSING_CUSTOMER": "നിങ്ങൾ ഏത് കടയാണ് സന്ദർശിച്ചത്?",
+        "UNKNOWN_CUSTOMER": "\"{spoken}\" കണ്ടെത്തിയില്ല. നിങ്ങൾ ഏത് കടയാണ് സന്ദർശിച്ചത്?",
+        "AMBIGUOUS_CUSTOMER": "\"{spoken}\" എന്നത് ഏത് കടയാണ്?",
+        "AMBIGUOUS_PRODUCT": "\"{spoken}\" എന്നത് ഏത് ഉൽപ്പന്നമാണ്?",
+        "UNKNOWN_PRODUCT": "\"{spoken}\" പട്ടികയിൽ ഇല്ല. ഏത് ഉൽപ്പന്നം?",
+        "NEW_PRODUCT_PRICE": "{item} വില എത്രയാണ്?{unit}",
+        "NEW_PRODUCT_UNIT": "{item} ഏത് യൂണിറ്റിലാണ് വിൽക്കുന്നത്?",
+        "MISSING_QUANTITY": "{item} എത്ര വേണം?",
+        "UNIT_MISMATCH": "{item} ന് ഏത് യൂണിറ്റ്?",
+        "MISSING_AMOUNT": "പേയ്‌മെന്റ് തുക എത്രയാണ്?",
+        "AMBIGUOUS_DATE": "{what} ന് ഏത് തീയതി?",
+    },
+    "bn-IN": {
+        "MISSING_CUSTOMER": "আপনি কোন দোকানে গিয়েছিলেন?",
+        "UNKNOWN_CUSTOMER": "\"{spoken}\" পাওয়া যায়নি। আপনি কোন দোকানে গিয়েছিলেন?",
+        "AMBIGUOUS_CUSTOMER": "\"{spoken}\" বলতে কোন দোকান?",
+        "AMBIGUOUS_PRODUCT": "\"{spoken}\" বলতে কোন পণ্য?",
+        "UNKNOWN_PRODUCT": "\"{spoken}\" তালিকায় নেই। কোন পণ্য?",
+        "NEW_PRODUCT_PRICE": "{item} এর দাম কত?{unit}",
+        "NEW_PRODUCT_UNIT": "{item} কোন ইউনিটে বিক্রি হয়?",
+        "MISSING_QUANTITY": "{item} কতটা লাগবে?",
+        "UNIT_MISMATCH": "{item} এর ইউনিট কী?",
+        "MISSING_AMOUNT": "পেমেন্টের পরিমাণ কত?",
+        "AMBIGUOUS_DATE": "{what} এর জন্য কোন তারিখ?",
+    },
+    "gu-IN": {
+        "MISSING_CUSTOMER": "તમે કયા દુકાનદારને મળ્યા?",
+        "UNKNOWN_CUSTOMER": "\"{spoken}\" મળ્યું નથી. તમે કયા દુકાનદારને મળ્યા?",
+        "AMBIGUOUS_CUSTOMER": "\"{spoken}\" એટલે કયા દુકાનદાર?",
+        "AMBIGUOUS_PRODUCT": "\"{spoken}\" એટલે કયું ઉત્પાદન?",
+        "UNKNOWN_PRODUCT": "\"{spoken}\" યાદીમાં નથી. કયું ઉત્પાદન?",
+        "NEW_PRODUCT_PRICE": "{item} ની કિંમત કેટલી છે?{unit}",
+        "NEW_PRODUCT_UNIT": "{item} કયા એકમમાં વેચાય છે?",
+        "MISSING_QUANTITY": "{item} કેટલું જોઈએ?",
+        "UNIT_MISMATCH": "{item} માટે કયું એકમ?",
+        "MISSING_AMOUNT": "ચુકવણીની રકમ કેટલી છે?",
+        "AMBIGUOUS_DATE": "{what} માટે કઈ તારીખ?",
+    },
+    "pa-IN": {
+        "MISSING_CUSTOMER": "ਤੁਸੀਂ ਕਿਹੜੇ ਦੁਕਾਨਦਾਰ ਨੂੰ ਮਿਲੇ?",
+        "UNKNOWN_CUSTOMER": "\"{spoken}\" ਨਹੀਂ ਮਿਲਿਆ। ਤੁਸੀਂ ਕਿਹੜੇ ਦੁਕਾਨਦਾਰ ਨੂੰ ਮਿਲੇ?",
+        "AMBIGUOUS_CUSTOMER": "\"{spoken}\" ਤੋਂ ਤੁਹਾਡਾ ਮਤਲਬ ਕਿਹੜਾ ਦੁਕਾਨਦਾਰ ਹੈ?",
+        "AMBIGUOUS_PRODUCT": "\"{spoken}\" ਤੋਂ ਤੁਹਾਡਾ ਮਤਲਬ ਕਿਹੜਾ ਉਤਪਾਦ ਹੈ?",
+        "UNKNOWN_PRODUCT": "\"{spoken}\" ਸੂਚੀ ਵਿੱਚ ਨਹੀਂ ਹੈ। ਕਿਹੜਾ ਉਤਪਾਦ?",
+        "NEW_PRODUCT_PRICE": "{item} ਦੀ ਕੀਮਤ ਕਿੰਨੀ ਹੈ?{unit}",
+        "NEW_PRODUCT_UNIT": "{item} ਕਿਸ ਇਕਾਈ ਵਿੱਚ ਵਿਕਦਾ ਹੈ?",
+        "MISSING_QUANTITY": "{item} ਕਿੰਨਾ ਚਾਹੀਦਾ ਹੈ?",
+        "UNIT_MISMATCH": "{item} ਲਈ ਕਿਹੜੀ ਇਕਾਈ?",
+        "MISSING_AMOUNT": "ਭੁਗਤਾਨ ਦੀ ਰਕਮ ਕਿੰਨੀ ਹੈ?",
+        "AMBIGUOUS_DATE": "{what} ਲਈ ਕਿਹੜੀ ਤਾਰੀਖ?",
+    },
 }
 
 _CONFIRM: dict[str, dict[str, str]] = {
@@ -102,11 +180,41 @@ _CONFIRM: dict[str, dict[str, str]] = {
         "order": "ऑर्डरमध्ये {n} वस्तू, एकूण {amount} रुपये.",
         "follow": "{k} फॉलो-अप ठरवले गेले.",
     },
+    "te-IN": {
+        "visit": "{customer} సందర్శన సేవ్ చేయబడింది.",
+        "order": "ఆర్డర్‌లో {n} వస్తువులు, మొత్తం {amount} రూపాయలు.",
+        "follow": "{k} ఫాలో-అప్‌లు షెడ్యూల్ చేయబడ్డాయి.",
+    },
+    "kn-IN": {
+        "visit": "{customer} ಭೇಟಿ ಉಳಿಸಲಾಗಿದೆ.",
+        "order": "ಆರ್ಡರ್‌ನಲ್ಲಿ {n} ವಸ್ತುಗಳು, ಒಟ್ಟು {amount} ರೂಪಾಯಿ.",
+        "follow": "{k} ಫಾಲೋ-ಅಪ್‌ಗಳನ್ನು ನಿಗದಿಪಡಿಸಲಾಗಿದೆ.",
+    },
+    "ml-IN": {
+        "visit": "{customer} സന്ദർശനം സേവ് ചെയ്തു.",
+        "order": "ഓർഡറിൽ {n} ഇനങ്ങൾ, ആകെ {amount} രൂപ.",
+        "follow": "{k} ഫോളോ-അപ്പുകൾ ഷെഡ്യൂൾ ചെയ്തു.",
+    },
+    "bn-IN": {
+        "visit": "{customer} এর ভিজিট সেভ হয়েছে।",
+        "order": "অর্ডারে {n}টি আইটেম, মোট {amount} টাকা।",
+        "follow": "{k}টি ফলো-আপ নির্ধারিত হয়েছে।",
+    },
+    "gu-IN": {
+        "visit": "{customer} ની મુલાકાત સેવ થઈ ગઈ.",
+        "order": "ઓર્ડરમાં {n} વસ્તુઓ, કુલ {amount} રૂપિયા.",
+        "follow": "{k} ફોલો-અપ નક્કી થયા.",
+    },
+    "pa-IN": {
+        "visit": "{customer} ਦੀ ਵਿਜ਼ਿਟ ਸੇਵ ਹੋ ਗਈ।",
+        "order": "ਆਰਡਰ ਵਿੱਚ {n} ਆਈਟਮ, ਕੁੱਲ {amount} ਰੁਪਏ।",
+        "follow": "{k} ਫਾਲੋ-ਅੱਪ ਤੈਅ ਹੋ ਗਏ।",
+    },
 }
 
 _WHAT = {
-    "payment": {"en-IN": "the payment", "hinglish": "payment", "hi-IN": "भुगतान", "ta-IN": "பணம்", "mr-IN": "पेमेंट"},
-    "delivery": {"en-IN": "the delivery", "hinglish": "delivery", "hi-IN": "डिलीवरी", "ta-IN": "டெலிவரி", "mr-IN": "डिलिव्हरी"},
+    "payment": {"en-IN": "the payment", "hinglish": "payment", "hi-IN": "भुगतान", "ta-IN": "பணம்", "mr-IN": "पेमेंट", "te-IN": "చెల్లింపు", "kn-IN": "ಪಾವತಿ", "ml-IN": "പേയ്‌മെന്റ്", "bn-IN": "পেমেন্ট", "gu-IN": "ચુકવણી", "pa-IN": "ਭੁਗਤਾਨ"},
+    "delivery": {"en-IN": "the delivery", "hinglish": "delivery", "hi-IN": "डिलीवरी", "ta-IN": "டெலிவரி", "mr-IN": "डिलिव्हरी", "te-IN": "డెలివరీ", "kn-IN": "ಡೆಲಿವರಿ", "ml-IN": "ഡെലിവറി", "bn-IN": "ডেলিভারি", "gu-IN": "ડિલિવરી", "pa-IN": "ਡਿਲੀਵਰੀ"},
 }
 
 

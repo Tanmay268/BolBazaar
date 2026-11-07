@@ -261,7 +261,7 @@ export function LogVisit({ onExit, onSaved, onQueueChange, online, language, set
           </ol>
         )}
 
-        <div className="seg seg-center" role="radiogroup" aria-label={t("speechLanguage")}>
+        <div className="lang-pick" role="radiogroup" aria-label={t("speechLanguage")}>
           {LANGUAGES.map((l) => (
             <button key={l.code} role="radio" aria-checked={language === l.code} className={language === l.code ? "on" : ""} onClick={() => setLanguage(l.code)}>{l.label}</button>
           ))}

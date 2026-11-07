@@ -28,6 +28,12 @@ PROFILES: dict[str, LanguageProfile] = {
     "en-IN": LanguageProfile("en-IN", "English", "en-IN", "transcribe", "en-IN", "timbre-v2.5", "Kaveri"),
     "ta-IN": LanguageProfile("ta-IN", "Tamil", "ta-IN", "verbatim", "ta-IN", "timbre-v2.5", "Asmita"),
     "mr-IN": LanguageProfile("mr-IN", "Marathi", "mr-IN", "verbatim", "mr-IN", "timbre-v2.5", "Zahira"),
+    "te-IN": LanguageProfile("te-IN", "Telugu", "te-IN", "verbatim", "te-IN", "timbre-v2.5", "Suhana"),
+    "kn-IN": LanguageProfile("kn-IN", "Kannada", "kn-IN", "verbatim", "kn-IN", "timbre-v2.5", "Saanvi"),
+    "ml-IN": LanguageProfile("ml-IN", "Malayalam", "ml-IN", "verbatim", "ml-IN", "timbre-v2.5", "Reshma"),
+    "bn-IN": LanguageProfile("bn-IN", "Bengali", "bn-IN", "verbatim", "bn-IN", "timbre-v2.5", "Kirra"),
+    "gu-IN": LanguageProfile("gu-IN", "Gujarati", "gu-IN", "verbatim", "gu-IN", "timbre-v2.5", "Falak"),
+    "pa-IN": LanguageProfile("pa-IN", "Punjabi", "pa-IN", "verbatim", "pa-IN", "timbre-v2.5", "Mehuli"),
 }
 
 

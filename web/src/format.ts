@@ -34,6 +34,14 @@ export const LANGUAGES = [
   { code: "hinglish", label: "Hinglish" },
   { code: "hi-IN", label: "हिन्दी" },
   { code: "en-IN", label: "English" },
+  { code: "mr-IN", label: "मराठी" },
+  { code: "gu-IN", label: "ગુજરાતી" },
+  { code: "pa-IN", label: "ਪੰਜਾਬੀ" },
+  { code: "bn-IN", label: "বাংলা" },
+  { code: "ta-IN", label: "தமிழ்" },
+  { code: "te-IN", label: "తెలుగు" },
+  { code: "kn-IN", label: "ಕನ್ನಡ" },
+  { code: "ml-IN", label: "മലയാളം" },
 ] as const;
 
 export const SAMPLE_TRANSCRIPT =

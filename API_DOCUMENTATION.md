@@ -55,7 +55,7 @@ States: `RECORDED → TRANSCRIBING → EXTRACTING → NEEDS_CLARIFICATION ⇄ RE
 
 Edit responses (`answers`, `corrections`) add `patch: [{path, old, new}]` and `unsupported: [text]`. A correction that changes nothing returns the same revision and lists the request under `unsupported` rather than dropping it.
 
-**Languages:** `hinglish` (default), `hi-IN`, `en-IN`, `ta-IN`, `mr-IN`. Clarification questions and spoken confirmations are localised for these.
+**Languages:** `hinglish` (default), `hi-IN`, `en-IN`, `ta-IN`, `mr-IN`, `te-IN`, `kn-IN`, `ml-IN`, `bn-IN`, `gu-IN`, `pa-IN`. Clarification questions and spoken confirmations are localised for these.
 
 **Confirm response:** `{captureId, visitId, orderId, orderTotalPaise, collectionIds, commitmentIds, customer, confirmationText, language, reply:{status: READY|FAILED|SKIPPED, url?}}`. A TTS failure never fails the request.
 

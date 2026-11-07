@@ -24,11 +24,15 @@ function Root() {
 
   useEffect(() => { setUnauthorizedHandler(() => { session.clear(); setUser(null); }); }, []);
 
-  if (!user) return <Login onLogin={setUser} />;
   const signOut = () => setUser(null);
-  return user.role === "rep"
-    ? <RepApp user={user} online={online} onSignOut={signOut} />
-    : <ManagerApp user={user} online={online} onSignOut={signOut} />;
+  return (
+    <>
+      {!user ? <Login onLogin={setUser} />
+        : user.role === "rep" ? <RepApp user={user} online={online} onSignOut={signOut} />
+        : <ManagerApp user={user} online={online} onSignOut={signOut} />}
+      <ApkLink loggedIn={!!user} />
+    </>
+  );
 }
 
 export default function App() {
@@ -37,7 +41,6 @@ export default function App() {
   return (
     <I18nProvider>
       <Root />
-      <ApkLink />
       {intro && <Intro onDone={() => setIntro(false)} />}
     </I18nProvider>
   );

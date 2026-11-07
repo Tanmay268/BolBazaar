@@ -272,7 +272,13 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; } td.wid
 .bug-head b { flex: 1 1 220px; } .bug-detail { padding: 0 18px 16px; display: grid; gap: 10px; } .bug-detail pre { background: var(--paper-2); padding: 10px; overflow: auto; font-size: .78rem; margin: 0; } .bug-actions { display: flex; gap: 8px; flex-wrap: wrap; } .bug-actions input { flex: 1 1 220px; min-height: 38px; padding: 0 10px; border: 1.5px solid var(--ink); font: inherit; }
 
 /* ---------- website-only APK install link ---------- */
-.apk-link { position: fixed; right: max(12px, env(safe-area-inset-right)); top: calc(max(12px, env(safe-area-inset-top)) ); z-index: 20; display: grid; place-items: center; width: 40px; height: 40px; background: var(--ink); color: #fff; border-radius: 50%; box-shadow: 0 6px 16px rgba(17,17,17,.22); transition: transform .15s, background .15s; }
+.apk-link { position: fixed; right: max(12px, env(safe-area-inset-right)); z-index: 20; display: grid; place-items: center; width: 40px; height: 40px; background: var(--ink); color: #fff; border-radius: 50%; box-shadow: 0 6px 16px rgba(17,17,17,.22); transition: transform .15s, background .15s; }
 .apk-link span { display: none; } .apk-link svg { color: #fff; }
 .apk-link:hover { background: var(--red); transform: translateY(-1px); }
-@media (max-width: 520px) { .has-apk .landing { padding-top: calc(env(safe-area-inset-top) + 58px); } }
+.apk-top { top: max(12px, env(safe-area-inset-top)); } .apk-bottom { bottom: max(14px, env(safe-area-inset-bottom)); }
+.has-apk .landing { padding-bottom: 80px; }
+
+/* ---------- speech-language picker (wraps; 11 languages) ---------- */
+.lang-pick { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 20px auto 6px; max-width: 460px; }
+.lang-pick button { padding: 6px 14px; min-height: 38px; font-weight: 700; font-size: .85rem; border: 1.5px solid var(--ink); border-radius: 999px; }
+.lang-pick button.on { background: var(--ink); color: #fff; }
