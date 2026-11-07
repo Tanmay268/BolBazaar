@@ -6,6 +6,7 @@ import { ManagerApp } from "./manager/ManagerApp";
 import { RepApp } from "./rep/RepApp";
 import type { User } from "./types";
 import { Intro } from "./intro/Intro";
+import { ApkLink } from "./ApkLink";
 
 function useOnline() {
   const [online, setOnline] = useState(navigator.onLine);
@@ -36,6 +37,7 @@ export default function App() {
   return (
     <I18nProvider>
       <Root />
+      <ApkLink />
       {intro && <Intro onDone={() => setIntro(false)} />}
     </I18nProvider>
   );

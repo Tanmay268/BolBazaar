@@ -4,6 +4,7 @@ const PATHS: Record<string, string> = {
   back: "M19 12H5M12 19l-7-7 7-7",
   arrow: "M5 12h14M12 5l7 7-7 7",
   upright: "M7 17L17 7M7 7h10v10",
+  download: "M12 4v12M6 11l6 6 6-6M5 21h14",
   mic: "M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3zM19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8",
   home: "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM9 22V12h6v10",
   calendar: "M19 4H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zM16 2v4M8 2v4M3 10h18",

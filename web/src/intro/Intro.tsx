@@ -17,7 +17,8 @@ const easeOut = (t: number) => 1 - Math.pow(1 - clamp01(t), 3);
 const easeIO = (t: number) => { t = clamp01(t); return t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; };
 const easeBack = (t: number) => { t = clamp01(t); const c = 1.4; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); };
 
-const FREEZE = Number(new URLSearchParams(location.search).get("introT") ?? -1); // debug: freeze the timeline at N seconds
+const DEBUG = new URLSearchParams(location.search).get("introT"); // debug: ?introT=2.4 freezes the timeline, ?introT=off skips it
+const FREEZE = DEBUG && DEBUG !== "off" ? Number(DEBUG) : -1;
 
 interface Props { onDone: () => void; ready?: boolean }
 
@@ -31,7 +32,7 @@ export function Intro({ onDone, ready = true }: Props) {
 
   useEffect(() => {
     const canvas = cv.current!, ctx = canvas.getContext("2d")!;
-    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) { onDone(); setGone(true); return; }
+    if (DEBUG === "off" || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) { onDone(); setGone(true); return; }
     let w = 0, h = 0, dpr = 1, raf = 0, t0 = 0, exitAt = -1, finished = false;
 
     const resize = () => {

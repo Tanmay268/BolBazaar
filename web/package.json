@@ -8,7 +8,7 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "cap:sync": "npm run build && cap sync android"
+    "cap:sync": "tsc --noEmit && vite build --mode app && cap sync android"
   },
   "dependencies": {
     "@capacitor/android": "^6.1.2",

@@ -270,3 +270,9 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; } td.wid
 .bug-filter { padding: 4px 18px 10px; } .bug-filter select { margin-left: 8px; min-height: 36px; border: 1.5px solid var(--ink); background: var(--white); padding: 0 8px; }
 .bug-list { display: grid; } .bug-item { border-top: 1px solid var(--hair); } .bug-head { width: 100%; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 12px 18px; text-align: left; background: none; border: 0; font: inherit; cursor: pointer; }
 .bug-head b { flex: 1 1 220px; } .bug-detail { padding: 0 18px 16px; display: grid; gap: 10px; } .bug-detail pre { background: var(--paper-2); padding: 10px; overflow: auto; font-size: .78rem; margin: 0; } .bug-actions { display: flex; gap: 8px; flex-wrap: wrap; } .bug-actions input { flex: 1 1 220px; min-height: 38px; padding: 0 10px; border: 1.5px solid var(--ink); font: inherit; }
+
+/* ---------- website-only APK install link ---------- */
+.apk-link { position: fixed; right: max(12px, env(safe-area-inset-right)); top: calc(max(12px, env(safe-area-inset-top)) ); z-index: 20; display: grid; place-items: center; width: 40px; height: 40px; background: var(--ink); color: #fff; border-radius: 50%; box-shadow: 0 6px 16px rgba(17,17,17,.22); transition: transform .15s, background .15s; }
+.apk-link span { display: none; } .apk-link svg { color: #fff; }
+.apk-link:hover { background: var(--red); transform: translateY(-1px); }
+@media (max-width: 520px) { .has-apk .landing { padding-top: calc(env(safe-area-inset-top) + 58px); } }
