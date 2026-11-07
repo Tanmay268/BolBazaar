@@ -15,7 +15,9 @@ from typing import Any
 from ..schemas_llm import Extraction, PatchOp
 from .dates import parse_iso, resolve_date_text
 from .resolution import Entry, Resolution, resolve
-from .units import allowed_units, normalize_unit, unit_ok, unit_price
+from .units import BASE_UNITS, MAX_PRICE_PAISE, allowed_units, normalize_unit, unit_ok, unit_price
+
+NEW_PRODUCT = "__new__"  # option value meaning "add what I said to the catalogue"
 
 
 class OpError(ValueError):
@@ -72,6 +74,7 @@ def _set_product(item: dict[str, Any], product: ProductRef) -> None:
     unit = item.get("unit")
     if unit is None or unit == "piece":
         unit = product.base_unit
+    item.pop("newProduct", None)
     item.update(productId=product.id, productName=product.name, candidates=[],
                 matchStatus="resolved", unit=unit)
     item["unitPricePaise"] = unit_price(product.price_paise, unit, product.base_unit, product.units_per_pack)
@@ -171,12 +174,28 @@ def validate(draft: dict[str, Any], cat: Catalog) -> list[dict[str, Any]]:
     for i, item in enumerate(draft["order"]["items"]):
         base = f"order.items.{i}"
         label = item.get("productName") or item.get("spokenName")
+        new = item.get("newProduct")
+        if new and not item.get("productId"):
+            # A catalogue entry that will be created when the visit is confirmed. It needs a unit and a price.
+            if not new.get("baseUnit"):
+                issues.append(_issue("NEW_PRODUCT_UNIT", f"{base}.unit", f"{base}.unit", "choice", item=new["name"],
+                                     options=[{"value": u, "label": u} for u in BASE_UNITS]))
+            if not new.get("pricePaise"):
+                issues.append(_issue("NEW_PRODUCT_PRICE", f"{base}.newProduct", f"{base}.newProductPrice", "number",
+                                     item=new["name"], unit=new.get("baseUnit") or ""))
+            q = item.get("quantity")
+            if not isinstance(q, int) or isinstance(q, bool) or q <= 0:
+                issues.append(_issue("MISSING_QUANTITY", f"{base}.quantity", f"{base}.quantity", "number", item=new["name"]))
+            continue
         if not item.get("productId") or item["productId"] not in cat.products:
             options = _options(item.get("candidates") or []) or [
                 {"value": p.id, "label": p.name} for p in list(cat.products.values())[:6]]
+            spoken = item.get("spokenName")
+            if spoken and len(spoken.strip()) >= 2:
+                options = options + [{"value": NEW_PRODUCT, "label": f"+ Add \"{spoken.strip()[:40]}\" as a new item"}]
             code = "AMBIGUOUS_PRODUCT" if item.get("matchStatus") == "ambiguous" else "UNKNOWN_PRODUCT"
             issues.append(_issue(code, base, f"{base}.productId", "choice",
-                                 spoken=item.get("spokenName"), options=options))
+                                 spoken=spoken, options=options, canCreate=bool(spoken)))
             continue
         product = cat.products[item["productId"]]
         quantity = item.get("quantity")
@@ -250,6 +269,24 @@ def _as_date(value: Any, cat: Catalog) -> str:
     return resolved.isoformat()
 
 
+def _start_new_product(item: dict[str, Any]) -> str:
+    """Mark an unmatched order line as "add to catalogue". The product is created only when the visit is confirmed."""
+    name = (item.get("spokenName") or "").strip()[:120]
+    if len(name) < 2:
+        raise OpError("Say the item's name first")
+    unit = item.get("unit")
+    item.update(productId=None, productName=None, matchStatus="new", candidates=[], unitPricePaise=None,
+                newProduct={"name": name[:1].upper() + name[1:], "baseUnit": unit if unit in BASE_UNITS else None,
+                            "pricePaise": None})
+    return name
+
+
+def _refresh_new_price(item: dict[str, Any]) -> None:
+    new = item["newProduct"]
+    ok = new.get("baseUnit") and new.get("pricePaise") and item.get("unit") == new["baseUnit"]
+    item["unitPricePaise"] = new["pricePaise"] if ok else None
+
+
 def _apply_set(draft: dict[str, Any], path: str, value: Any, cat: Catalog) -> tuple[Any, Any]:
     """Apply one whitelisted ``set``. Returns (old, new) in display terms."""
 
@@ -274,13 +311,15 @@ def _apply_set(draft: dict[str, Any], path: str, value: Any, cat: Catalog) -> tu
         draft["order"]["deliveryDate"] = _as_date(value, cat)
         return old, draft["order"]["deliveryDate"]
 
-    m = re.fullmatch(r"order\.items\.(\d+)\.(productId|product|quantity|unit)", path)
+    m = re.fullmatch(r"order\.items\.(\d+)\.(productId|product|quantity|unit|newProductPrice)", path)
     if m:
         item = _at(draft, "order.items", m.group(1))
         field = m.group(2)
         if field in {"productId", "product"}:
             old = item.get("productName") or item.get("spokenName")
             if field == "productId":
+                if value == NEW_PRODUCT:
+                    return old, _start_new_product(item)
                 if value not in cat.products:
                     raise OpError("Unknown product")
                 _set_product(item, cat.products[value])
@@ -299,10 +338,30 @@ def _apply_set(draft: dict[str, Any], path: str, value: Any, cat: Catalog) -> tu
                 raise OpError("Quantity must be positive")
             old, item["quantity"] = item.get("quantity"), quantity
             return old, quantity
+        if field == "newProductPrice":
+            new = item.get("newProduct")
+            if not new:
+                raise OpError("There is no new item to price")
+            try:
+                paise = round(float(value) * 100)
+            except (TypeError, ValueError):
+                raise OpError("Price must be a number") from None
+            if not 0 < paise <= MAX_PRICE_PAISE:
+                raise OpError(f"Price must be more than 0 and at most {MAX_PRICE_PAISE // 100} rupees")
+            old = None if not new.get("pricePaise") else new["pricePaise"] / 100
+            new["pricePaise"] = paise
+            _refresh_new_price(item)
+            return old, paise / 100
         unit = normalize_unit(str(value))
         if unit is None:
             raise OpError("Unknown unit")
         old = item.get("unit")
+        if item.get("newProduct") and not item.get("productId"):
+            if unit not in BASE_UNITS:
+                raise OpError("Say the unit the item is sold in: kg, packet, bottle or piece")
+            item["newProduct"]["baseUnit"], item["unit"] = unit, unit
+            _refresh_new_price(item)
+            return old, unit
         if item.get("productId"):
             product = cat.products[item["productId"]]
             if unit == "piece":

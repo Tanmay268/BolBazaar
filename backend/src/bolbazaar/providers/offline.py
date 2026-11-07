@@ -218,6 +218,44 @@ class OfflineReasoner:
                 return PatchResult(ops=[PatchOp(op="set", path="order.deliveryDate", value=phrase)], unsupported=[])
         return PatchResult(ops=[], unsupported=[utterance])
 
+    def parse_catalogue(self, text: str):
+        """Rule-based fallback: segments split on commas / 'aur' / newlines; 'chawal 60 rupaye kilo' -> Chawal, kg, 60."""
+        from ..domain.units import BASE_UNITS, normalize_unit
+        from ..schemas_llm import CatalogueExtraction, CatalogueItemX
+        stop = {"add", "karo", "naya", "nayi", "item", "items", "product", "catalogue", "mein", "me", "ka", "ki", "ke", "hai",
+                "per", "ek", "one", "price", "rate", "at", "for", "each", "every", "rupaye", "rupees", "rupee", "rs", "inr", "aur", "and"}
+        rupee = {"rupaye", "rupees", "rupee", "rs", "inr", "rupya"}
+        items = []
+        for seg in re.split(r"[,;\n]+|\s+(?:aur|and)\s+", text, flags=re.I):
+            words = seg.split()
+            if not words:
+                continue
+            norm = replace_number_words(normalize(seg)).split()
+            unit = next((u for u in (normalize_unit(w) for w in norm) if u in BASE_UNITS), None)
+            price = None
+            for i, tok in enumerate(norm):
+                if tok in rupee:
+                    near = [norm[j] for j in (i - 1, i + 1) if 0 <= j < len(norm)]
+                    price = next((float(n) for n in near if n.replace('.', '', 1).isdigit()), None)
+                    if price is not None:
+                        break
+            if price is None:
+                nums = [t for t in norm if t.replace('.', '', 1).isdigit()]
+                price = float(nums[0]) if len(nums) == 1 else None
+            name_words = []
+            for w in words:
+                lw = normalize(w)
+                if not lw or lw in stop or replace_number_words(lw).replace('.', '', 1).isdigit() or normalize_unit(lw):
+                    if name_words and (lw.replace('.', '', 1).isdigit() or normalize_unit(lw) or lw in rupee):
+                        break
+                    continue
+                name_words.append(w.strip(".,;:!?"))
+            name = " ".join(name_words).strip()
+            if len(name) >= 2:
+                items.append(CatalogueItemX(name=name[:1].upper() + name[1:], unit=unit, price_rupees=price,
+                                            units_per_pack=None, aliases=[], evidence=seg.strip()))
+        return CatalogueExtraction(items=items)
+
     def parse_manager_query(self, text: str) -> ManagerQuery:
         t = normalize(text)
         days = first_number(t)

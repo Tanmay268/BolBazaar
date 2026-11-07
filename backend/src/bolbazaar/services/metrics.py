@@ -12,6 +12,7 @@ from typing import Any
 from sqlalchemy import Select, and_, case, func, select
 from sqlalchemy.orm import Session, sessionmaker
 
+from ..costguard import CostGuard, estimate_tokens
 from ..domain.dates import day_bounds_utc, today_in
 from ..errors import ApiError
 from ..models import Commitment, Complaint, Customer, Order, OrderItem, Organization, Product, Territory, User, Visit
@@ -32,8 +33,8 @@ def _rupees(paise: int) -> str:
 
 
 class MetricsService:
-    def __init__(self, sf: sessionmaker[Session], providers: Providers) -> None:
-        self.sf, self.providers = sf, providers
+    def __init__(self, sf: sessionmaker[Session], providers: Providers, guard: CostGuard) -> None:
+        self.sf, self.providers, self.guard = sf, providers, guard
 
     # ---------------------------------------------------------------- scope
 
@@ -169,7 +170,8 @@ class MetricsService:
 
     def ask(self, user: Principal, text: str) -> dict[str, Any]:
         try:
-            parsed = self.providers.reasoner.parse_manager_query(text)
+            parsed = self.guard.run(user.id, "llm", lambda: self.providers.reasoner.parse_manager_query(text),
+                                    est_tokens=estimate_tokens(text))
         except ProviderError as error:
             raise ApiError(503 if error.retryable else 502, "PROVIDER_ERROR", "The assistant could not read the question",
                            {"category": error.category}) from error

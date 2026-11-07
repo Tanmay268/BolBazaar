@@ -7,7 +7,9 @@ domain rules. Prompts never include other tenants' data.
 from __future__ import annotations
 
 import json
+import random
 import re
+import threading
 import time
 from typing import Any, Callable, TypeVar
 from urllib.parse import quote, urlsplit
@@ -16,8 +18,8 @@ import httpx
 from pydantic import BaseModel, ValidationError
 
 from ..config import Settings
-from ..schemas_llm import Extraction, MANAGER_INTENTS, ManagerQuery, PatchResult, strict_schema
-from .base import ExtractionContext, ProviderError
+from ..schemas_llm import CatalogueExtraction, Extraction, MANAGER_INTENTS, ManagerQuery, PatchResult, strict_schema
+from .base import DailyBudget, ExtractionContext, ProviderError, report_usage
 
 M = TypeVar("M", bound=BaseModel)
 
@@ -52,6 +54,18 @@ Values: product is the spoken product name; quantity/amount are numbers; dates a
 phrase like 'next Monday'. Reference date: {today} ({weekday}). Anything that does not fit goes in
 unsupported, verbatim. Never guess an index; if unclear, put the request in unsupported."""
 
+CATALOGUE_SYSTEM = """You turn a distributor's spoken or typed product list into catalogue entries.
+The speech may be Hindi, English or Hinglish, with transcription errors. Rules:
+- One entry per distinct product. Never invent products or prices; use null when something was not said.
+- name: the product name as it would appear on a price list (brand names in Latin script, e.g. 'Parle-G Biscuit').
+- unit is what one priced unit is sold as: exactly one of kg, packet, bottle, piece (kilo/kilogram -> kg,
+  pkt/pack -> packet, botal -> bottle, nag/pc -> piece). null if not said.
+- price_rupees is the price in rupees PER THAT UNIT as a number ('saath rupaye kilo' -> 60, 'das ka packet' -> 10).
+- units_per_pack is how many units are in one case/carton/peti if said ('case mein 24'), else null.
+- aliases: other names the speaker used for the same product (e.g. chawal / rice); else an empty list.
+- evidence is the exact phrase you used.
+- Ignore anything that is not a product (greetings, instructions)."""
+
 MANAGER_SYSTEM = (
     "Map the sales manager's question to exactly one intent from: " + ", ".join(MANAGER_INTENTS) +
     ". Use 'unsupported' if none fits. Set days only if the question states a number of days, else null."
@@ -67,6 +81,8 @@ class AzureReasoner:
         self.settings = settings
         self._http = httpx.Client(timeout=settings.azure_openai_timeout_ms / 1000, transport=transport)
         self._sleep = sleep
+        self._gate = threading.Semaphore(max(1, settings.azure_max_concurrent_requests))
+        self._budget = DailyBudget(settings.azure_daily_call_budget, "Azure OpenAI")
 
     def _url_and_extra(self) -> tuple[str, dict[str, Any]]:
         s = self.settings
@@ -82,28 +98,46 @@ class AzureReasoner:
         payload = {
             "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
             "temperature": 0,
+            "max_tokens": self.settings.azure_max_output_tokens,  # bounds the cost of a single response
             "response_format": {"type": "json_schema",
                                 "json_schema": {"name": name, "strict": True, "schema": strict_schema(model)}},
             **extra,
         }
         headers = {"api-key": self.settings.azure_openai_api_key, "Content-Type": "application/json"}
         last: ProviderError | None = None
-        for attempt in range(self.settings.azure_openai_max_retries + 1):
+        retries = min(self.settings.azure_openai_max_retries, 3)  # hard cap: config cannot create a retry storm
+        for attempt in range(retries + 1):
+            if not self._gate.acquire(timeout=self.settings.queue_wait_seconds):
+                raise ProviderError("busy", f"Azure OpenAI {name} is busy, try again shortly")
             try:
+                self._budget.consume()  # every HTTP attempt, retries included
                 response = self._http.post(url, headers=headers, content=json.dumps(payload, ensure_ascii=False))
             except httpx.HTTPError:
                 last = ProviderError("network", f"Azure OpenAI {name} request failed", retryable=True)
             else:
                 if response.status_code == 200:
+                    self._report_usage(response)
                     return self._parse(response, model, name)
                 retryable = response.status_code == 429 or response.status_code >= 500
-                last = ProviderError("rate_limit" if response.status_code == 429 else "http",
-                                     f"Azure OpenAI {name} failed with status {response.status_code}",
+                category = "rate_limit" if response.status_code == 429 else (
+                    "auth" if response.status_code in {401, 403} else "http")
+                last = ProviderError(category, f"Azure OpenAI {name} failed with status {response.status_code}",
                                      retryable=retryable)
-            if not last.retryable or attempt >= self.settings.azure_openai_max_retries:
+            finally:
+                self._gate.release()
+            if not last.retryable or attempt >= retries:
                 raise last
-            self._sleep(min(0.5 * (2 ** attempt), 4.0))
+            self._sleep(min(0.5 * (2 ** attempt), 4.0) * (0.5 + random.random() / 2))  # backoff with jitter
         raise last or ProviderError("unknown", f"Azure OpenAI {name} failed")
+
+    @staticmethod
+    def _report_usage(response: httpx.Response) -> None:
+        """Provider-reported token usage (actual, not estimated) for the call in progress."""
+        try:
+            usage = response.json().get("usage") or {}
+            report_usage("tokens", int(usage.get("total_tokens") or 0))
+        except (ValueError, TypeError, AttributeError):
+            pass
 
     @staticmethod
     def _parse(response: httpx.Response, model: type[M], name: str) -> M:
@@ -128,4 +162,7 @@ class AzureReasoner:
 
     def parse_manager_query(self, text: str) -> ManagerQuery:
         return self._chat(MANAGER_SYSTEM, text, ManagerQuery, "manager_query")
+
+    def parse_catalogue(self, text: str) -> CatalogueExtraction:
+        return self._chat(CATALOGUE_SYSTEM, text, CatalogueExtraction, "catalogue_extraction")
 

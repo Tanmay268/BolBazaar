@@ -8,36 +8,19 @@ never contain keys, bodies or transcripts.
 
 from __future__ import annotations
 
+import random
 import threading
 import time
 import uuid
-from datetime import date
 from typing import Any, Callable
 
 import httpx
 
 from ..config import Settings
 from ..domain.languages import LanguageProfile
-from .base import ProviderError, Speech, Transcript
+from .base import DailyBudget, ProviderError, Speech, Transcript
 
 _RETRY_STATUS = {429, 500, 502, 503, 504}
-
-
-class _Budget:
-    def __init__(self, limit: int) -> None:
-        self.limit, self._day, self._used, self._lock = limit, date.today(), 0, threading.Lock()
-
-    def consume(self) -> None:
-        with self._lock:
-            if self._day != date.today():
-                self._day, self._used = date.today(), 0
-            if self._used >= self.limit:
-                raise ProviderError("budget", "Daily Gnani call budget reached")
-            self._used += 1
-
-    @property
-    def used(self) -> int:
-        return self._used
 
 
 def _error_code(response: httpx.Response) -> str | None:
@@ -80,7 +63,7 @@ class GnaniClient:
         self._http = httpx.Client(base_url=settings.gnani_base_url.rstrip("/"),
                                   timeout=settings.gnani_timeout_ms / 1000, transport=transport)
         self._gate = threading.Semaphore(max(1, settings.gnani_max_concurrent_requests))
-        self._budget = _Budget(settings.gnani_daily_call_budget)
+        self._budget = DailyBudget(settings.gnani_daily_call_budget, "Gnani")
         self._sleep = sleep
 
     @property
@@ -89,21 +72,24 @@ class GnaniClient:
 
     def post(self, path: str, operation: str, **kwargs: Any) -> httpx.Response:
         last: ProviderError | None = None
-        for attempt in range(self.settings.gnani_max_retries + 1):
-            self._budget.consume()
-            headers = {"X-API-Key-ID": self.settings.gnani_api_key, "X-API-Request-ID": uuid.uuid4().hex}
+        for attempt in range(min(self.settings.gnani_max_retries, 3) + 1):  # hard cap: config cannot create a retry storm
+            if not self._gate.acquire(timeout=self.settings.queue_wait_seconds):
+                raise ProviderError("busy", f"Gnani {operation} is busy, try again shortly")
             try:
-                with self._gate:
-                    response = self._http.post(path, headers=headers, **kwargs)
+                self._budget.consume()  # every HTTP attempt, retries included, is charged against the daily budget
+                headers = {"X-API-Key-ID": self.settings.gnani_api_key, "X-API-Request-ID": uuid.uuid4().hex}
+                response = self._http.post(path, headers=headers, **kwargs)
             except httpx.HTTPError:
                 last = ProviderError("network", f"Gnani {operation} request failed", retryable=True)
             else:
                 if response.status_code == 200:
                     return response
                 last = _map_status(response, operation)
-            if not last.retryable or attempt >= self.settings.gnani_max_retries:
+            finally:
+                self._gate.release()
+            if not last.retryable or attempt >= min(self.settings.gnani_max_retries, 3):
                 raise last
-            self._sleep(min(0.5 * (2 ** attempt), 4.0))
+            self._sleep(min(0.5 * (2 ** attempt), 4.0) * (0.5 + random.random() / 2))  # exponential backoff with jitter
         raise last or ProviderError("unknown", f"Gnani {operation} failed")
 
 

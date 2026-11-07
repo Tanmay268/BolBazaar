@@ -130,7 +130,9 @@ def test_retries_transient_errors_with_backoff_then_succeeds():
 
     client, sleeps = gnani(handler)
     assert GnaniSTT(client).transcribe(b"x", get_profile("en-IN")).text == "ok ok"
-    assert len(calls) == 3 and sleeps == [0.5, 1.0]
+    # exponential backoff (0.5 s, 1 s) with 0.5x-1x jitter
+    assert len(calls) == 3 and len(sleeps) == 2
+    assert 0.25 <= sleeps[0] <= 0.5 and 0.5 <= sleeps[1] <= 1.0
 
 
 def test_client_errors_are_not_retried_and_never_leak_secrets():

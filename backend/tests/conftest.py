@@ -12,9 +12,17 @@ from bolbazaar.providers.base import Providers
 from bolbazaar.providers.offline import OfflineReasoner, OfflineSTT, OfflineTTS
 
 
+# Functional tests exercise behaviour, not throttling, so request-rate limits are relaxed here. The security suite
+# (tests/security) builds its settings with the real defaults to test enforcement.
+RELAXED = dict(rl_ip_per_minute=100_000, rl_user_per_minute=100_000, rl_login_ip_per_minute=100_000,
+               rl_login_failures_per_account=100_000, rl_login_failures_per_ip=100_000, rl_register_ip_per_hour=100_000)
+
+
 def make_settings(tmp_path, **kw) -> Settings:
-    return Settings(database_url="sqlite://", audio_storage_dir=str(tmp_path / "audio"), jwt_secret="test-secret-with-at-least-32-bytes-of-length",
-                    provider_mode="offline", _env_file=None, **kw)
+    params = dict(database_url="sqlite://", audio_storage_dir=str(tmp_path / "audio"),
+                  jwt_secret="test-secret-with-at-least-32-bytes-of-length", provider_mode="offline", _env_file=None, **RELAXED)
+    params.update(kw)
+    return Settings(**params)
 
 
 def tone_wav(seconds: float = 2.0, rate: int = 16000) -> bytes:

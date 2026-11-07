@@ -84,3 +84,12 @@ Format: newest first. Every iteration adds an entry.
 - Cut Redis/Celery/AWS from the MVP; keep PostgreSQL; fixed manager query intents instead of text-to-SQL.
 ### Notes
 - No application code yet. Reference project (BolBazaar) was not modified.
+
+## Unreleased: catalogue management and voice "add item"
+
+- Managers/admins can create, edit (name, unit, price, case size, spoken names), retire and restore products (`/v1/products`, new Catalogue page).
+- During a visit an unknown item can be added to the catalogue by voice or button; created on confirm, never from an abandoned draft.
+- New clarification codes `NEW_PRODUCT_UNIT`, `NEW_PRODUCT_PRICE`; the unknown/ambiguous product question now includes a `__new__` option.
+- Limits: 60 additions per user per day, 500 active products, price up to Rs 1,00,000.
+- Whole catalogue by voice or text: `POST /v1/products/draft` (LLM proposes rows, nothing saved) then `POST /v1/products/bulk`; new import panel on the Catalogue page.
+- First-login welcome tour (rep and manager, EN/Hinglish, replayable), in-app Help & manual, and Report a bug (`/v1/bug-reports`, admin triage page).

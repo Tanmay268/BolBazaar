@@ -34,6 +34,24 @@ export interface DraftItem {
   unitPricePaise: number | null;
   confidence: number;
   evidence: string | null;
+  /** Set when the rep chose "add as a new item": created in the catalogue when the visit is confirmed. */
+  newProduct?: { name: string; baseUnit: string | null; pricePaise: number | null };
+}
+
+export interface BugReportRow {
+  id: string; category: string; title: string; description: string; status: string;
+  context: Record<string, unknown>; adminNote: string | null; createdAt: string; updatedAt: string;
+  reporter?: string; role?: string;
+}
+
+export interface ProductDraftRow {
+  name: string; baseUnit: string | null; priceRupees: number | null; unitsPerPack: number | null;
+  aliases: string[]; evidence: string; issues: string[]; duplicateOf: string | null; include: boolean;
+}
+
+export interface ProductRow {
+  id: string; name: string; baseUnit: string; unitsPerPack: number | null;
+  pricePaise: number; active: boolean; aliases: string[];
 }
 
 export interface Draft {

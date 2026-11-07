@@ -1,5 +1,5 @@
-import type {
-  AskResult, CaptureSummary, CustomerRow, OrderRow, CaptureView, Commitment, Committed, ConversionRow, DecliningRow,
+import type { ProductRow,
+  AskResult, BugReportRow, ProductDraftRow, CaptureSummary, CustomerRow, OrderRow, CaptureView, Commitment, Committed, ConversionRow, DecliningRow,
   InactiveRow, ManagerSummary, OverdueRow, PendingRow, User, VisitDetail, VisitRow,
 } from "./types";
 
@@ -14,6 +14,9 @@ export class ApiFailure extends Error {
   /** True when the failure means the device is offline or the server is unreachable. */
   get isNetwork() { return this.status === 0; }
 }
+
+/** The most recent failed request (code, status, path without query, request id). Sent with bug reports when the user agrees. */
+export const diagnostics: { lastError: { code: string; status: number; path: string; requestId?: string } | null } = { lastError: null };
 
 export const session = {
   get token(): string | null { try { return localStorage.getItem(TOKEN_KEY); } catch { return null; } },
@@ -38,15 +41,17 @@ async function request<T>(path: string, init: RequestInit = {}, extraHeaders: Re
   try {
     response = await fetch(`${API_URL}${path}`, { ...init, headers });
   } catch {
+    diagnostics.lastError = { code: "NETWORK", status: 0, path: path.split("?")[0] };
     throw new ApiFailure(0, "NETWORK", "Can't reach the server. You may be offline.");
   }
   if (response.status === 401 && !path.startsWith("/v1/auth/")) onUnauthorized();
   if (!response.ok) {
-    let code = "HTTP_ERROR", message = `Request failed (${response.status})`, details: unknown;
+    let code = "HTTP_ERROR", message = `Request failed (${response.status})`, details: unknown, requestId: string | undefined;
     try {
       const body = await response.json();
-      if (body?.error) { code = body.error.code; message = body.error.message; details = body.error.details; }
+      if (body?.error) { code = body.error.code; message = body.error.message; details = body.error.details; requestId = body.requestId; }
     } catch { /* non-JSON error */ }
+    diagnostics.lastError = { code, status: response.status, path: path.split("?")[0], requestId };
     throw new ApiFailure(response.status, code, message, details);
   }
   if (response.status === 204) return undefined as T;
@@ -108,6 +113,29 @@ export const api = {
 
   orders: (limit = 50) => request<{ orders: OrderRow[] }>(`/v1/orders?limit=${limit}`),
   customers: () => request<{ customers: CustomerRow[] }>("/v1/customers"),
+
+  reportBug: (body: { category: string; title: string; description: string; context?: Record<string, unknown> }) =>
+    request<BugReportRow>("/v1/bug-reports", { method: "POST", body: json(body) }),
+  myBugReports: () => request<{ reports: BugReportRow[] }>("/v1/bug-reports/mine"),
+  adminBugReports: (status?: string) => request<{ reports: BugReportRow[] }>(`/v1/admin/bug-reports${status ? `?status=${status}` : ""}`),
+  updateBugReport: (id: string, status: string, note?: string) =>
+    request<BugReportRow>(`/v1/admin/bug-reports/${id}`, { method: "PATCH", body: json({ status, note }) }),
+
+  products: (includeInactive = false) =>
+    request<{ products: ProductRow[] }>(`/v1/products${includeInactive ? "?includeInactive=true" : ""}`),
+  createProduct: (body: { name: string; baseUnit: string; priceRupees: number; unitsPerPack?: number; aliases?: string[] }) =>
+    request<ProductRow>("/v1/products", { method: "POST", body: json(body) }),
+  draftProducts(opts: { audio?: Blob; text?: string; language?: string }) {
+    const form = new FormData();
+    form.set("language", opts.language ?? "hinglish");
+    if (opts.audio) form.set("audio", opts.audio, "catalogue.wav");
+    if (opts.text) form.set("text", opts.text);
+    return request<{ transcript: string; items: ProductDraftRow[]; truncated: boolean; note: string }>("/v1/products/draft", { method: "POST", body: form });
+  },
+  bulkProducts: (items: { name: string; baseUnit: string; priceRupees: number; unitsPerPack?: number; aliases?: string[] }[]) =>
+    request<{ created: ProductRow[]; skipped: { name: string; reason: string }[] }>("/v1/products/bulk", { method: "POST", body: json({ items }) }),
+  updateProduct: (id: string, body: { name?: string; baseUnit?: string; priceRupees?: number; unitsPerPack?: number | null; aliases?: string[]; active?: boolean }) =>
+    request<ProductRow>(`/v1/products/${id}`, { method: "PATCH", body: json(body) }),
 
   managerSummary: () => request<ManagerSummary>("/v1/manager/summary"),
   overdue: () => request<{ rows: OverdueRow[] }>("/v1/manager/overdue-payments"),

@@ -57,7 +57,7 @@ export function ReviewList({ view }: { view: CaptureView }) {
                   const line = item.quantity && item.unitPricePaise != null ? item.quantity * item.unitPricePaise : null;
                   return (
                     <div key={i} className={`rv-item ${asking(`order.items.${i}`) ? "rv-item-ask" : ""}`}>
-                      <span className="rv-item-name">{item.productName ?? item.spokenName}{!item.productId && <em> · not in catalogue</em>}</span>
+                      <span className="rv-item-name">{item.productName ?? item.spokenName}{!item.productId && (item.newProduct ? <em> · new item, added when you confirm</em> : <em> · not in catalogue</em>)}</span>
                       <span className="rv-item-qty">× {item.quantity ?? "?"}</span>
                       <span className="rv-item-amt">{rupees(line)}</span>
                     </div>

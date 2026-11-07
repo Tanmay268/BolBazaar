@@ -45,7 +45,9 @@ def test_full_demo_scenario_from_speech_to_dashboard(api):
     # 4. one clarification question, in the rep's language, with catalogue options
     q = cap["clarification"]
     assert q["code"] == "AMBIGUOUS_PRODUCT" and "Real juice" in q["question"] and "kaun sa product" in q["question"]
-    assert {o["label"] for o in q["options"]} == {"Real Mango Juice 1L", "Real Guava Juice 1L", "Real Mixed Fruit Juice 1L"}
+    labels = {o["label"] for o in q["options"] if o["value"] != "__new__"}
+    assert labels == {"Real Mango Juice 1L", "Real Guava Juice 1L", "Real Mixed Fruit Juice 1L"}
+    assert any(o["value"] == "__new__" for o in q["options"])  # the rep can also add it as a new catalogue item
     assert get(api, f"/captures/{cap['id']}/question-audio").status_code == 200
 
     # 5. the rep answers by voice/text; the draft is patched into a new revision

@@ -13,6 +13,9 @@ _ALIASES = {
     "cartons": "case", "box": "case", "boxes": "case", "dabba": "case",
 }
 KNOWN_UNITS = ("packet", "bottle", "kg", "piece", "case")
+# Units a product can be *sold in*. "case" is derived from units_per_pack, never a base unit.
+BASE_UNITS = ("packet", "bottle", "kg", "piece")
+MAX_PRICE_PAISE = 10_000_000  # Rs 1,00,000 per unit: a typo guard, not a business rule
 
 
 def normalize_unit(value: str | None) -> str | None:

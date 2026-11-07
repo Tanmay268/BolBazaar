@@ -37,7 +37,7 @@ HISTORY = [
 OUTSTANDING = {"cus_sharma_gen": 1_250_000, "cus_khan": 800_000, "cus_gupta": 300_000}
 
 
-def seed_demo(sf: sessionmaker[Session], now: datetime | None = None) -> bool:
+def seed_demo(sf: sessionmaker[Session], now: datetime | None = None, password: str = DEMO_PASSWORD) -> bool:
     """Create demo data once. Returns False if the database already has an organisation."""
 
     now = now or datetime.now(timezone.utc)
@@ -49,7 +49,7 @@ def seed_demo(sf: sessionmaker[Session], now: datetime | None = None) -> bool:
         for t in TERRITORIES:
             s.add(Territory(id=t["id"], org_id=ORG_ID, name=t["name"], manager_id="usr_meera"))
         s.flush()
-        password_hash = hash_password(DEMO_PASSWORD)
+        password_hash = hash_password(password)
         for u in USERS:
             s.add(User(org_id=ORG_ID, password_hash=password_hash, **u))
         for pid, name, aliases, unit, pack, price in PRODUCTS:

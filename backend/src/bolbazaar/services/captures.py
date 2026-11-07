@@ -12,19 +12,24 @@ from __future__ import annotations
 import copy
 import hashlib
 import logging
+import math
 import re
+import threading
+import time
 from datetime import date, datetime, timezone
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
 
-from ..audio import extension_for, prepare_wav_segments
+from ..audio import extension_for, looks_like_audio, prepare_wav_segments, wav_seconds
 from ..config import Settings
+from ..costguard import CostGuard, estimate_tokens
+from .catalogue import CatalogueService
 from ..domain.answers import interpret_answer
 from ..domain.dates import today_in
-from ..domain.draft import Catalog, CustomerRef, ProductRef, apply_ops, build_draft, llm_view, validate
+from ..domain.draft import NEW_PRODUCT, Catalog, CustomerRef, ProductRef, apply_ops, build_draft, llm_view, validate
 from ..domain.i18n import render_confirmation, render_question
 from ..domain.languages import LanguageProfile, get_profile
 from ..domain.units import unit_price
@@ -59,8 +64,15 @@ def _provider_error(stage: str, error: ProviderError, capture_id: str | None = N
 
 
 class CaptureService:
-    def __init__(self, sf: sessionmaker[Session], providers: Providers, settings: Settings, store: AudioStore) -> None:
-        self.sf, self.providers, self.settings, self.store = sf, providers, settings, store
+    def __init__(self, sf: sessionmaker[Session], providers: Providers, settings: Settings, store: AudioStore,
+                 guard: CostGuard, catalogue: CatalogueService) -> None:
+        self.sf, self.providers, self.settings, self.store, self.guard = sf, providers, settings, store, guard
+        self.catalogue = catalogue
+        self._locks = [threading.Lock() for _ in range(64)]  # striped: one paid call per capture/question at a time
+        self._last_purge = 0.0
+
+    def _lock_for(self, key: str) -> threading.Lock:
+        return self._locks[int(hashlib.sha256(key.encode()).hexdigest()[:8], 16) % len(self._locks)]
 
     # ------------------------------------------------------------------ helpers
 
@@ -159,11 +171,17 @@ class CaptureService:
         profile = get_profile(language)
         transcript = (transcript or "").strip() or None
         require(audio or transcript, 400, "INVALID_CAPTURE", "Provide an audio recording or a transcript")
+        require(not transcript or len(transcript) <= self.settings.max_transcript_chars, 413, "TEXT_TOO_LONG",
+                f"The text is too long (maximum {self.settings.max_transcript_chars} characters)")
+        require(len(customer_hint_id or "") <= 40 and len(captured_at or "") <= 64, 422, "VALIDATION_ERROR",
+                "Invalid customerId or capturedAt")
         ext = None
         if audio:
             require(len(audio) <= self.settings.max_audio_bytes, 413, "AUDIO_TOO_LARGE", "Recording is too large")
             ext = extension_for(filename, content_type)
             require(ext, 400, "UNSUPPORTED_AUDIO", "Unsupported audio type")
+            require(looks_like_audio(audio), 400, "UNSUPPORTED_AUDIO", "This file is not a supported audio recording")
+        self._purge_audio()
         fingerprint = _sha(profile.code, hashlib.sha256(audio).hexdigest() if audio else transcript, customer_hint_id or "")
         scope = f"{user.id}:capture:{key}"
         captured = None
@@ -211,10 +229,50 @@ class CaptureService:
             require(cap.state in {"FAILED", "RECORDED"}, 409, "INVALID_STATE", "Only a failed capture can be retried")
         return self._process(user, capture_id)
 
-    def _transcribe(self, audio: bytes, profile: LanguageProfile) -> str:
+    def _purge_audio(self) -> None:
+        """Enforce audio retention while the server runs (it used to run only at start-up)."""
+        now = time.monotonic()
+        if now - self._last_purge > 600:
+            self._last_purge = now
+            self.store.purge_older_than(self.settings.audio_retention_hours)
+
+    def _transcribe(self, user: Principal, audio: bytes, profile: LanguageProfile) -> str:
+        # Validation and duration limits run first and cost nothing; only then is quota reserved and Gnani called.
         segments = prepare_wav_segments(audio, max_segment_s=self.settings.gnani_max_segment_seconds,
                                         max_total_s=self.settings.max_audio_seconds)
-        return " ".join(self.providers.stt.transcribe(seg, profile).text for seg in segments).strip()
+        seconds = math.ceil(sum(wav_seconds(seg) for seg in segments))
+        with self.guard.user_slot(user.id):
+            self.guard.reserve(user.id, "stt", requests=len(segments), audio_seconds=seconds)
+            texts = [self.guard.call(user.id, "gnani", lambda seg=seg: self.providers.stt.transcribe(seg, profile).text)
+                     for seg in segments]
+        return " ".join(texts).strip()
+
+    def transcribe_upload(self, user: Principal, audio: bytes, content_type: str | None, filename: str | None,
+                          language: str) -> str:
+        """Validate and transcribe an upload for features outside the visit flow (same limits and quotas)."""
+        profile = get_profile(language)
+        require(audio, 400, "EMPTY_AUDIO", "The recording is empty")
+        require(len(audio) <= self.settings.max_audio_bytes, 413, "AUDIO_TOO_LARGE", "Recording is too large")
+        require(extension_for(filename, content_type), 400, "UNSUPPORTED_AUDIO", "Unsupported audio type")
+        require(looks_like_audio(audio), 400, "UNSUPPORTED_AUDIO", "This file is not a supported audio recording")
+        try:
+            text = self._transcribe(user, audio, profile)
+        except ProviderError as error:
+            raise _provider_error("stt", error) from error
+        require(text.strip(), 422, "NO_SPEECH", "No speech was detected. Please record again.")
+        return text
+
+    def _extract(self, user: Principal, transcript: str, context: ExtractionContext):
+        est = estimate_tokens(transcript, str(context.customers), str(context.products))
+        return self.guard.run(user.id, "llm", lambda: self.providers.reasoner.extract(transcript, context), est_tokens=est)
+
+    def _claim(self, capture_id: str, needs_stt: bool) -> bool:
+        """Atomically take ownership of processing. Of N concurrent requests exactly one wins and pays the providers."""
+        with self.sf.begin() as s:
+            won = s.execute(update(Capture).where(Capture.id == capture_id, Capture.state.in_(("RECORDED", "FAILED")))
+                            .values(state="TRANSCRIBING" if needs_stt else "EXTRACTING", error_category=None,
+                                    error_stage=None))
+            return won.rowcount == 1
 
     def _fail(self, capture_id: str, stage: str, error: ProviderError) -> ApiError:
         self._set(capture_id, state="FAILED", error_category=error.category, error_stage=stage)
@@ -225,23 +283,36 @@ class CaptureService:
         with self.sf() as s:
             cap = s.get(Capture, capture_id)
             profile, transcript, audio_key, hint = get_profile(cap.language), cap.transcript, cap.audio_key, cap.customer_hint_id
+        if not self._claim(capture_id, transcript is None):
+            return self.get_view(user, capture_id)  # another request is already processing this capture
+        stage = "stt" if transcript is None else "llm"
+        try:
+            self.guard.consume(f"capture:{capture_id}", "process.attempts", "life", self.settings.max_process_attempts_per_capture,
+                               code="TOO_MANY_ATTEMPTS", message="This recording has been retried too many times. Record it again.")
+        except ApiError:
+            self._set(capture_id, state="FAILED", error_category="attempts", error_stage=stage)
+            raise
         if transcript is None:
-            self._set(capture_id, state="TRANSCRIBING", error_category=None, error_stage=None)
             audio = self.store.load(audio_key) if audio_key else None
             if audio is None:
                 raise self._fail(capture_id, "stt", ProviderError("unsupported_audio", "The recording is no longer available"))
             try:
-                transcript = self._transcribe(audio, profile)
+                transcript = self._transcribe(user, audio, profile)
             except ProviderError as error:
                 raise self._fail(capture_id, "stt", error) from error
-            self._set(capture_id, transcript=transcript)
-        self._set(capture_id, state="EXTRACTING", error_category=None, error_stage=None)
+            except ApiError:
+                self._set(capture_id, state="FAILED", error_category="quota", error_stage="stt")
+                raise
+            self._set(capture_id, transcript=transcript, state="EXTRACTING", error_category=None, error_stage=None)
         with self.sf() as s:
             cat, _org = self._catalog(s, user)
         try:
-            extraction = self.providers.reasoner.extract(transcript, self._context(cat, profile.code))
+            extraction = self._extract(user, transcript, self._context(cat, profile.code))
         except ProviderError as error:
             raise self._fail(capture_id, "llm", error) from error
+        except ApiError:
+            self._set(capture_id, state="FAILED", error_category="quota", error_stage="llm")
+            raise
         draft = build_draft(extraction, cat, hint)
         issues = validate(draft, cat)
         with self.sf.begin() as s:
@@ -267,6 +338,8 @@ class CaptureService:
     # ------------------------------------------------------------------ edit: answers and corrections
 
     def _apply(self, user: Principal, capture_id: str, revision: int, ops: list[PatchOp]) -> dict[str, Any]:
+        if any(op.op == "set" and op.value == NEW_PRODUCT for op in ops):
+            self.catalogue._spend_creation(user)  # outside the transaction: it writes to the usage ledger
         try:
             with self.sf.begin() as s:
                 cap = self._load(s, user, capture_id, write=True)
@@ -301,6 +374,8 @@ class CaptureService:
     def correct_text(self, user: Principal, capture_id: str, revision: int, utterance: str) -> dict[str, Any]:
         utterance = (utterance or "").strip()
         require(utterance, 400, "INVALID_CORRECTION", "Nothing to apply")
+        require(len(utterance) <= self.settings.max_correction_chars, 413, "TEXT_TOO_LONG",
+                f"The correction is too long (maximum {self.settings.max_correction_chars} characters)")
         with self.sf() as s:
             cap = self._load(s, user, capture_id, write=True)
             require(cap.state in EDITABLE, 409, "INVALID_STATE", f"Capture is {cap.state} and cannot be edited")
@@ -312,7 +387,11 @@ class CaptureService:
         unsupported: list[str] = []
         if ops is None:
             try:
-                result = self.providers.reasoner.patch(llm_view(draft), utterance, self._context(cat, language))
+                context = self._context(cat, language)
+                view = llm_view(draft)
+                result = self.guard.run(
+                    user.id, "llm", lambda: self.providers.reasoner.patch(view, utterance, context),
+                    est_tokens=estimate_tokens(utterance, str(view), str(context.customers), str(context.products)))
             except ProviderError as error:
                 raise _provider_error("llm", error, capture_id) from error
             ops, unsupported = result.ops, list(result.unsupported)
@@ -325,15 +404,16 @@ class CaptureService:
                       content_type: str | None, filename: str | None) -> dict[str, Any]:
         require(len(audio) <= self.settings.max_audio_bytes, 413, "AUDIO_TOO_LARGE", "Recording is too large")
         require(extension_for(filename, content_type), 400, "UNSUPPORTED_AUDIO", "Unsupported audio type")
+        require(looks_like_audio(audio), 400, "UNSUPPORTED_AUDIO", "This file is not a supported audio recording")
         with self.sf() as s:
             cap = self._load(s, user, capture_id, write=True)
             self._check_revision(cap, revision)
             profile = get_profile(cap.language)
         try:
-            text = self._transcribe(audio, profile)
+            text = self._transcribe(user, audio, profile)
         except ProviderError as error:
             raise _provider_error("stt", error, capture_id) from error
-        return self.correct_text(user, capture_id, revision, text)
+        return self.correct_text(user, capture_id, revision, text[: self.settings.max_correction_chars])
 
     def cancel(self, user: Principal, capture_id: str) -> dict[str, Any]:
         with self.sf.begin() as s:
@@ -376,7 +456,7 @@ class CaptureService:
                 committed = None
                 continue
         require(committed, 409, "CONFLICT", "Please retry")
-        reply = self._reply(capture_id, committed["confirmationText"], get_profile(committed["language"]), speak_reply)
+        reply = self._reply(user.id, capture_id, committed["confirmationText"], get_profile(committed["language"]), speak_reply)
         return {**committed, "reply": reply}
 
     def _commit(self, s: Session, user: Principal, cap: Capture, draft: dict[str, Any]) -> dict[str, Any]:
@@ -394,6 +474,8 @@ class CaptureService:
                           status="CONFIRMED", total_paise=0,
                           delivery_date=date.fromisoformat(draft["order"]["deliveryDate"]) if draft["order"].get("deliveryDate") else None)
             for item in items:
+                if item.get("newProduct") and not item.get("productId"):
+                    item["productId"] = self.catalogue.create_from_visit(s, user, item["newProduct"]).id
                 product = s.get(Product, item["productId"])
                 require(product and product.org_id == user.org_id and product.active, 422, "PRODUCT_INVALID",
                         "A product is no longer available")
@@ -446,7 +528,7 @@ class CaptureService:
 
     # ------------------------------------------------------------------ speech output (never inside a transaction)
 
-    def _reply(self, capture_id: str, text: str, profile: LanguageProfile, speak: bool) -> dict[str, Any]:
+    def _reply(self, user_id: str, capture_id: str, text: str, profile: LanguageProfile, speak: bool) -> dict[str, Any]:
         with self.sf() as s:
             row = s.scalar(select(ReplyAudio).where(ReplyAudio.capture_id == capture_id))
             if row:
@@ -454,14 +536,22 @@ class CaptureService:
         if not speak:
             return {"status": "SKIPPED", "text": text, "url": None}
         status, key, model, category = "READY", f"replies/{capture_id}.wav", None, None
-        try:
-            speech = self.providers.tts.synthesize(text, profile)
-            self.store.save(key, speech.audio)
-            model = speech.model
-        except Exception as error:  # noqa: BLE001 - TTS must never fail an already-committed visit
-            status, key = "FAILED", None
-            category = error.category if isinstance(error, ProviderError) else "unexpected"
-            LOGGER.warning("reply_tts_failed capture=%s category=%s", capture_id, category)
+        spoken = text[: self.settings.max_tts_chars]
+        with self._lock_for(f"reply:{capture_id}"):
+            with self.sf() as s:  # a concurrent confirm may have finished while we waited: never pay twice
+                row = s.scalar(select(ReplyAudio).where(ReplyAudio.capture_id == capture_id))
+                if row:
+                    return self._reply_view(row, capture_id)
+            try:
+                speech = self.guard.run(user_id, "tts", lambda: self.providers.tts.synthesize(spoken, profile),
+                                        chars=len(spoken))
+                self.store.save(key, speech.audio)
+                model = speech.model
+            except Exception as error:  # noqa: BLE001 - TTS must never fail an already-committed visit
+                status, key = "FAILED", None
+                category = (error.category if isinstance(error, ProviderError)
+                            else error.code.lower() if isinstance(error, ApiError) else "unexpected")
+                LOGGER.warning("reply_tts_failed capture=%s category=%s", capture_id, category)
         row = ReplyAudio(capture_id=capture_id, audio_key=key, text=text, language=profile.code, model=model,
                          status=status, error_category=category)
         try:
@@ -486,12 +576,17 @@ class CaptureService:
             profile = get_profile(cap.language)
         require(view["clarification"], 404, "NO_OPEN_QUESTION", "There is no open question")
         text = view["clarification"]["question"]
+        text = text[: self.settings.max_tts_chars]
         key = f"questions/{_sha(profile.code, text)}.wav"
         data = self.store.load(key)
         if data is None:
-            try:
-                data = self.providers.tts.synthesize(text, profile).audio
-            except ProviderError as error:
-                raise _provider_error("tts", error, capture_id) from error
-            self.store.save(key, data)
+            with self._lock_for(key):
+                data = self.store.load(key)  # cache hit after waiting for a concurrent identical request
+                if data is None:
+                    try:
+                        data = self.guard.run(user.id, "tts", lambda: self.providers.tts.synthesize(text, profile),
+                                              chars=len(text)).audio
+                    except ProviderError as error:
+                        raise _provider_error("tts", error, capture_id) from error
+                    self.store.save(key, data)
         return data, "audio/wav"

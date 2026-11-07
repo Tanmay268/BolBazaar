@@ -5,8 +5,13 @@ import { Icon } from "../Icon";
 import { LangToggle, useI18n } from "../i18n";
 import { Sidebar, type NavItem } from "../Shell";
 import { Wordmark } from "../brand";
+import { HoldToTalk } from "../rep/HoldToTalk";
+import { AdminBugs } from "../help/AdminBugs";
+import { BugReport } from "../help/BugReport";
+import { Manual } from "../help/Manual";
+import { Tour, tourUnseen } from "../help/Tour";
 import type {
-  AskResult, Commitment, ConversionRow, CustomerRow, DecliningRow, InactiveRow, ManagerSummary, OrderRow, OverdueRow, PendingRow, User, VisitRow,
+  AskResult, ProductDraftRow, Commitment, ConversionRow, CustomerRow, DecliningRow, InactiveRow, ManagerSummary, OrderRow, OverdueRow, PendingRow, ProductRow, User, VisitRow,
 } from "../types";
 
 interface Data {
@@ -19,7 +24,7 @@ interface Data {
   visits: VisitRow[];
 }
 
-type Page = "overview" | "ask" | "visits" | "orders" | "promises" | "retailers" | "team";
+type Page = "overview" | "ask" | "visits" | "orders" | "catalogue" | "promises" | "retailers" | "team" | "help" | "bug" | "bugs";
 
 const SUGGESTIONS = [
   "Which retailers have overdue payments?",
@@ -84,6 +89,9 @@ export function ManagerApp({ user, online, onSignOut }: { user: User; online: bo
   const [data, setData] = useState<Data | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState<Page>("overview");
+  const [tour, setTour] = useState(() => tourUnseen(user.id));
+  const [lastPage, setLastPage] = useState<Page>("overview");
+  useEffect(() => { if (!["help", "bug", "bugs"].includes(page)) setLastPage(page); }, [page]);
   const [menu, setMenu] = useState(false);
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState<AskResult | null>(null);
@@ -114,9 +122,13 @@ export function ManagerApp({ user, online, onSignOut }: { user: User; online: bo
     { id: "ask", label: t("navAsk"), icon: "spark" },
     { id: "visits", label: t("tabVisits"), icon: "calendar" },
     { id: "orders", label: t("navOrders"), icon: "box" },
+    { id: "catalogue", label: t("navCatalogue"), icon: "list" },
     { id: "promises", label: t("navPromises"), icon: "flag" },
     { id: "retailers", label: t("navRetailers"), icon: "store" },
     { id: "team", label: t("navTeam"), icon: "users" },
+    ...(user.role === "admin" ? [{ id: "bugs", label: "Bug reports", icon: "alert" }] : []),
+    { id: "help", label: "Help & manual", icon: "more" },
+    { id: "bug", label: "Report a bug", icon: "alert" },
   ];
 
   const s = data?.summary;
@@ -125,6 +137,7 @@ export function ManagerApp({ user, online, onSignOut }: { user: User; online: bo
 
   return (
     <div className="mgr">
+      {tour && <Tour role={user.role} userId={user.id} onClose={() => setTour(false)} />}
       <Sidebar items={nav} active={page} onSelect={(id) => setPage(id as Page)} open={menu} onClose={() => setMenu(false)}
         footer={<>
           <div className="side-user"><span className="avatar avatar-light">{user.name.slice(0, 1)}</span><div><b>{user.name}</b><small>{user.role}</small></div></div>
@@ -148,7 +161,10 @@ export function ManagerApp({ user, online, onSignOut }: { user: User; online: bo
             </div>
           </div>
           {error && <div className="error">{error}</div>}
-          {!data || !s ? <Skeleton /> : (
+          {page === "help" && <Manual role={user.role} onTour={() => setTour(true)} onReport={() => setPage("bug")} />}
+          {page === "bug" && <BugReport online={online} page={`manager: ${lastPage}`} />}
+          {page === "bugs" && user.role === "admin" && <AdminBugs />}
+          {page === "help" || page === "bug" || page === "bugs" ? null : !data || !s ? <Skeleton /> : (
             <>
               {page === "overview" && (() => {
                 const v30 = s.visits30d, prev = s.visitsPrev30d;
@@ -227,6 +243,7 @@ export function ManagerApp({ user, online, onSignOut }: { user: User; online: bo
                 </Panel>
               )}
               {page === "orders" && <OrdersPage />}
+              {page === "catalogue" && <CataloguePage online={online} />}
               {page === "promises" && <PromisesPage today={today} />}
               {page === "retailers" && <RetailersPage overdue={data.overdue} today={today} />}
               {page === "team" && (
@@ -245,6 +262,167 @@ export function ManagerApp({ user, online, onSignOut }: { user: User; online: bo
         </main>
       </div>
     </div>
+  );
+}
+
+const UNITS = ["kg", "packet", "bottle", "piece"];
+const ISSUE_TEXT: Record<string, string> = {
+  missing_price: "needs a price", missing_unit: "needs a unit", missing_name: "needs a name",
+  duplicate: "already in catalogue", repeated: "listed twice",
+};
+
+interface ImportRow { include: boolean; name: string; unit: string; price: string; pack: string; aliases: string; issues: string[]; duplicateOf: string | null }
+const toImport = (r: ProductDraftRow): ImportRow => ({
+  include: r.include, name: r.name, unit: r.baseUnit ?? "", price: r.priceRupees != null ? String(r.priceRupees) : "",
+  pack: r.unitsPerPack ? String(r.unitsPerPack) : "", aliases: r.aliases.join(", "), issues: r.issues, duplicateOf: r.duplicateOf,
+});
+const importReady = (r: ImportRow) => r.name.trim().length >= 2 && UNITS.includes(r.unit) && Number(r.price) > 0;
+
+/** Say or type a whole product list; the assistant proposes rows; nothing is saved until the manager adds them. */
+function ImportPanel({ online, onAdded }: { online: boolean; onAdded: () => void }) {
+  const [text, setText] = useState("");
+  const [rows, setRows] = useState<ImportRow[] | null>(null);
+  const [heard, setHeard] = useState<string | null>(null);
+  const [busy, setBusy] = useState<"read" | "add" | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [done, setDone] = useState<string | null>(null);
+  const fail = (e: unknown) => setError(e instanceof ApiFailure ? e.message : "That didn't work. Try again.");
+
+  async function read(opts: { audio?: Blob; text?: string }) {
+    setBusy("read"); setError(null); setDone(null);
+    try {
+      const r = await api.draftProducts(opts);
+      setRows(r.items.map(toImport)); setHeard(r.transcript);
+      if (r.items.length === 0) setError("I couldn't find any products in that. Say each item with its unit and price.");
+      if (r.truncated) setError("That was a long list: only the first 100 items are shown. Add these, then do the rest.");
+    } catch (e) { fail(e); } finally { setBusy(null); }
+  }
+  const set = (i: number, patch: Partial<ImportRow>) => setRows((rs) => rs && rs.map((r, k) => (k === i ? { ...r, ...patch } : r)));
+  const chosen = rows?.filter((r) => r.include) ?? [];
+  const canAdd = chosen.length > 0 && chosen.every(importReady) && !busy && online;
+
+  async function add() {
+    setBusy("add"); setError(null);
+    try {
+      const r = await api.bulkProducts(chosen.map((c) => ({ name: c.name.trim(), baseUnit: c.unit, priceRupees: Number(c.price),
+        unitsPerPack: c.pack ? Number(c.pack) : undefined, aliases: c.aliases.split(",").map((a) => a.trim()).filter(Boolean) })));
+      setDone(`Added ${r.created.length} item${r.created.length === 1 ? "" : "s"}.${r.skipped.length ? ` Skipped ${r.skipped.map((s) => `${s.name} (${s.reason})`).join(", ")}.` : ""}`);
+      setRows(null); setHeard(null); setText(""); onAdded();
+    } catch (e) { fail(e); } finally { setBusy(null); }
+  }
+
+  return (
+    <Panel title="Speak or type your whole list">
+      <div className="cat-import">
+        <p className="note">Read out your products with unit and price, for example <i>“chawal 60 rupaye kilo, atta 45 rupaye kilo, Parle-G 10 rupaye packet”</i>. You review everything before it is added.</p>
+        <HoldToTalk label="Hold and speak your list" disabled={!!busy || !online} onError={setError} onRecorded={(b) => void read({ audio: b })} />
+        <textarea value={text} onChange={(e) => setText(e.target.value)} rows={3} maxLength={6000} aria-label="Product list"
+          placeholder="or type / paste it here: chawal 60 rupaye kilo, atta 45 rupaye kilo ..." />
+        <button className="btn btn-ink" disabled={!!busy || !online || text.trim().length < 3} onClick={() => void read({ text: text.trim() })}>
+          {busy === "read" ? "Reading…" : "Read my list"}
+        </button>
+        {done && <div className="notice">{done}</div>}
+        {error && <div className="error" role="alert">{error}</div>}
+      </div>
+
+      {rows && rows.length > 0 && (
+        <>
+          {heard && <p className="note cat-heard">I heard: “{heard}”</p>}
+          <Table head={["Add", "Name", "Sold by", "Price (₹)", "Case of", "Check"]}>
+            {rows.map((r, i) => (
+              <tr key={i} className={r.include ? "" : "cat-retired"}>
+                <td><input type="checkbox" checked={r.include} onChange={(e) => set(i, { include: e.target.checked })} aria-label={`Add ${r.name}`} /></td>
+                <td><input value={r.name} onChange={(e) => set(i, { name: e.target.value })} aria-label="Name" /></td>
+                <td><select value={r.unit} onChange={(e) => set(i, { unit: e.target.value })} aria-label="Unit"><option value="">?</option>{UNITS.map((u) => <option key={u}>{u}</option>)}</select></td>
+                <td><input className="cat-num" type="number" min="0.01" step="0.01" value={r.price} onChange={(e) => set(i, { price: e.target.value })} aria-label="Price" /></td>
+                <td><input className="cat-num" type="number" min="2" value={r.pack} onChange={(e) => set(i, { pack: e.target.value })} aria-label="Units per case" /></td>
+                <td>{r.include && !importReady(r) ? <span className="chip-red">needs unit &amp; price</span>
+                  : r.issues.filter((x) => x !== "missing_unit" && x !== "missing_price").map((x) => <span key={x} className="chip-red">{ISSUE_TEXT[x] ?? x}{x === "duplicate" && r.duplicateOf ? `: ${r.duplicateOf}` : ""}</span>)}</td>
+              </tr>
+            ))}
+          </Table>
+          <div className="cat-import-actions">
+            <button className="btn btn-red" disabled={!canAdd} onClick={() => void add()}>{busy === "add" ? "Adding…" : `Add ${chosen.length} item${chosen.length === 1 ? "" : "s"} to catalogue`}</button>
+            <button className="btn btn-outline" disabled={!!busy} onClick={() => { setRows(null); setHeard(null); }}>Discard</button>
+          </div>
+        </>
+      )}
+    </Panel>
+  );
+}
+
+/** Manager's catalogue: add items, set prices, change names/spoken names, retire items. Reps can also add items by voice. */
+function CataloguePage({ online }: { online: boolean }) {
+  const [rows, setRows] = useState<ProductRow[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [edit, setEdit] = useState<string | null>(null);
+  const blank = { name: "", unit: "kg", price: "", pack: "", aliases: "" };
+  const [form, setForm] = useState(blank);
+  const [draft, setDraft] = useState(blank);
+  const load = useCallback(() => { api.products(true).then((r) => setRows(r.products)).catch((e) => { setRows([]); setError(e instanceof ApiFailure ? e.message : "Couldn't load the catalogue."); }); }, []);
+  useEffect(load, [load]);
+  const split = (text: string) => text.split(",").map((a) => a.trim()).filter(Boolean);
+  async function run(action: () => Promise<unknown>) {
+    setBusy(true); setError(null);
+    try { await action(); load(); return true; }
+    catch (e) { setError(e instanceof ApiFailure ? e.message : "That didn't work."); return false; }
+    finally { setBusy(false); }
+  }
+  const add = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const ok = await run(() => api.createProduct({ name: form.name.trim(), baseUnit: form.unit, priceRupees: Number(form.price),
+      unitsPerPack: form.pack ? Number(form.pack) : undefined, aliases: split(form.aliases) }));
+    if (ok) setForm(blank);
+  };
+  const startEdit = (p: ProductRow) => { setEdit(p.id); setDraft({ name: p.name, unit: p.baseUnit, price: String(p.pricePaise / 100), pack: p.unitsPerPack ? String(p.unitsPerPack) : "", aliases: p.aliases.join(", ") }); };
+  const save = async (p: ProductRow) => {
+    const ok = await run(() => api.updateProduct(p.id, { name: draft.name.trim(), baseUnit: draft.unit, priceRupees: Number(draft.price),
+      unitsPerPack: draft.pack ? Number(draft.pack) : null, aliases: split(draft.aliases) }));
+    if (ok) setEdit(null);
+  };
+  return (
+    <>
+      <ImportPanel online={online} onAdded={load} />
+      <Panel title="Add an item">
+        <form className="cat-form" onSubmit={(e) => void add(e)}>
+          <label>Name<input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Basmati Rice" required minLength={2} maxLength={120} /></label>
+          <label>Sold by<select value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })}>{UNITS.map((u) => <option key={u}>{u}</option>)}</select></label>
+          <label>Price (₹ per unit)<input type="number" min="0.01" step="0.01" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} placeholder="60" required /></label>
+          <label>Units per case <small>(optional)</small><input type="number" min="2" max="1000" value={form.pack} onChange={(e) => setForm({ ...form, pack: e.target.value })} placeholder="12" /></label>
+          <label className="cat-wide">Other names reps say <small>(comma separated)</small><input value={form.aliases} onChange={(e) => setForm({ ...form, aliases: e.target.value })} placeholder="chawal, rice" /></label>
+          <button className="btn btn-red" disabled={busy || !online || !form.name.trim() || !form.price}>Add to catalogue</button>
+        </form>
+        {error && <div className="error cat-error" role="alert">{error}</div>}
+      </Panel>
+
+      <Panel title={`Catalogue${rows ? ` (${rows.filter((p) => p.active).length} active)` : ""}`}>
+        {!rows ? <Skeleton /> : (
+          <Table head={["Item", "Sold by", "Price (₹)", "Case of", "Spoken names", ""]} empty="No products yet. Add the first one above.">
+            {rows.map((p) => edit === p.id ? (
+              <tr key={p.id}>
+                <td><input value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} aria-label="Name" /></td>
+                <td><select value={draft.unit} onChange={(e) => setDraft({ ...draft, unit: e.target.value })} aria-label="Unit">{UNITS.map((u) => <option key={u}>{u}</option>)}</select></td>
+                <td><input className="cat-num" type="number" min="0.01" step="0.01" value={draft.price} onChange={(e) => setDraft({ ...draft, price: e.target.value })} aria-label="Price" /></td>
+                <td><input className="cat-num" type="number" min="2" value={draft.pack} onChange={(e) => setDraft({ ...draft, pack: e.target.value })} aria-label="Units per case" /></td>
+                <td><input value={draft.aliases} onChange={(e) => setDraft({ ...draft, aliases: e.target.value })} aria-label="Spoken names" /></td>
+                <td className="cat-actions"><button className="btn btn-red btn-sm" disabled={busy} onClick={() => void save(p)}>Save</button> <button className="btn btn-outline btn-sm" onClick={() => setEdit(null)}>Cancel</button></td>
+              </tr>
+            ) : (
+              <tr key={p.id} className={p.active ? "" : "cat-retired"}>
+                <td>{p.name}{!p.active && <span className="chip"> retired</span>}</td><td>{p.baseUnit}</td><td className="num">{(p.pricePaise / 100).toLocaleString("en-IN")}</td>
+                <td className="num">{p.unitsPerPack ?? "—"}</td><td className="wide">{p.aliases.join(", ") || "—"}</td>
+                <td className="cat-actions">
+                  <button className="btn btn-outline btn-sm" disabled={busy || !online} onClick={() => startEdit(p)}>Edit</button>{" "}
+                  <button className="btn btn-outline btn-sm" disabled={busy || !online} onClick={() => void run(() => api.updateProduct(p.id, { active: !p.active }))}>{p.active ? "Retire" : "Restore"}</button>
+                </td>
+              </tr>
+            ))}
+          </Table>
+        )}
+        <p className="note cat-note">Changing a price affects new orders only; past orders keep the price they were saved with. Retired items disappear from new visits.</p>
+      </Panel>
+    </>
   );
 }
 

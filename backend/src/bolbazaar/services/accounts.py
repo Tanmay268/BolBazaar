@@ -10,6 +10,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
 
 from ..config import Settings
+from ..costguard import CostGuard
 from ..errors import ApiError, require
 from ..models import Organization, Territory, User
 from ..security import hash_password
@@ -19,9 +20,10 @@ MIN_PASSWORD = 8
 
 
 class AccountService:
-    def __init__(self, sf: sessionmaker[Session], settings: Settings) -> None:
+    def __init__(self, sf: sessionmaker[Session], settings: Settings, guard: CostGuard) -> None:
         self.sf = sf
         self.settings = settings
+        self.guard = guard
 
     def territories(self) -> list[dict[str, str]]:
         with self.sf() as s:
@@ -39,11 +41,17 @@ class AccountService:
         require(2 <= len(name) <= 80, 422, "INVALID_NAME", "Enter your full name.")
         require(MIN_PASSWORD <= len(password) <= 128, 422, "WEAK_PASSWORD", f"Password must be at least {MIN_PASSWORD} characters.")
         require(role in {"rep", "manager"}, 422, "INVALID_ROLE", "Choose field executive or manager.")
+        if role == "rep" and self.settings.rep_signup_code:
+            require(hmac.compare_digest(signup_code.encode(), self.settings.rep_signup_code.encode()), 403,
+                    "BAD_SIGNUP_CODE", "That sign-up code is not valid.")
         if role == "manager":
             expected = self.settings.manager_signup_code
             require(expected, 403, "MANAGER_SIGNUP_CLOSED", "Manager accounts are created by an administrator.")
             require(hmac.compare_digest(signup_code.encode(), expected.encode()), 403, "BAD_SIGNUP_CODE", "That manager code is not valid.")
 
+        # Global daily ceiling on new accounts: bounds account farming even when every request comes from a new IP.
+        self.guard.consume("global", "signup.count", "d", self.settings.signup_global_per_day, code="SIGNUP_LIMIT",
+                           message="Sign-ups are paused for today. Try again tomorrow.", status=503)
         with self.sf() as s:
             org = self._org(s) or self._create_org(s)
             if s.scalar(select(User.id).where(User.username == username)):

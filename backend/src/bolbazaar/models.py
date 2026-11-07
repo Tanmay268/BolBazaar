@@ -272,3 +272,49 @@ class AuditLog(Base):
     meta: Mapped[dict] = mapped_column(JSON, default=dict)
     occurred_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
 
+
+
+class UsageCounter(Base):
+    """Atomic usage ledger. One row per (scope, metric, window); ``used`` only changes through a conditional upsert.
+
+    scope:  ``user:<id>``, ``global``, ``capture:<id>`` or ``ip:<hash>``
+    metric: ``<op>.<unit>``, e.g. ``stt.requests``, ``tts.chars``, ``gnani.audio_seconds``
+    window: ``m:<epoch-minute>``, ``h:<epoch-hour>``, ``d:<YYYYMMDD>`` or ``life``
+    """
+
+    __tablename__ = "usage_counters"
+    scope: Mapped[str] = mapped_column(String(80), primary_key=True)
+    metric: Mapped[str] = mapped_column(String(48), primary_key=True)
+    window: Mapped[str] = mapped_column(String(24), primary_key=True)
+    used: Mapped[int] = mapped_column(BigInteger, default=0)
+    updated_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, index=True)
+
+
+class ProviderSwitch(Base):
+    """Live emergency switch. A row with enabled=False disables a provider without a redeploy."""
+
+    __tablename__ = "provider_switches"
+    provider: Mapped[str] = mapped_column(String(16), primary_key=True)
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    reason: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    updated_by: Mapped[Optional[str]] = mapped_column(String(40), nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+class BugReport(Base):
+    """A problem reported from inside the app. Context is a small whitelisted dict (page, version, last error id)."""
+
+    __tablename__ = "bug_reports"
+    id: Mapped[str] = _pk("bug")
+    org_id: Mapped[str] = mapped_column(String(40), index=True)
+    user_id: Mapped[str] = mapped_column(String(40), index=True)
+    role: Mapped[str] = mapped_column(String(16))
+    category: Mapped[str] = mapped_column(String(24))
+    title: Mapped[str] = mapped_column(String(120))
+    description: Mapped[str] = mapped_column(Text)
+    context: Mapped[dict] = mapped_column(JSON, default=dict)
+    user_agent: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    status: Mapped[str] = mapped_column(String(16), default="open", index=True)
+    admin_note: Mapped[Optional[str]] = mapped_column(String(300), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, onupdate=utcnow)

@@ -79,6 +79,19 @@ class Extraction(_Strict):
     commitments: list[CommitmentX]
 
 
+class CatalogueItemX(_Strict):
+    name: str
+    unit: Optional[str]
+    price_rupees: Optional[float]
+    units_per_pack: Optional[int]
+    aliases: list[str]
+    evidence: str
+
+
+class CatalogueExtraction(_Strict):
+    items: list[CatalogueItemX]
+
+
 class PatchOp(_Strict):
     op: Literal["set", "remove"]
     path: str

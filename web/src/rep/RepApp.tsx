@@ -8,8 +8,11 @@ import { flushQueue, queue } from "../queue";
 import { AppBar, BottomNav } from "../Shell";
 import type { CaptureSummary, Commitment, OrderRow, User, VisitDetail, VisitRow } from "../types";
 import { LogVisit } from "./LogVisit";
+import { BugReport } from "../help/BugReport";
+import { Manual } from "../help/Manual";
+import { Tour, tourUnseen } from "../help/Tour";
 
-type Screen = "today" | "visits" | "orders" | "more" | "followups" | "log";
+type Screen = "today" | "visits" | "orders" | "more" | "followups" | "log" | "help" | "bug";
 
 const isToday = (iso: string) => new Date(iso).toDateString() === new Date().toDateString();
 const two = (n: number) => String(n).padStart(2, "0");
@@ -179,12 +182,14 @@ function FollowUps({ refreshKey, onBack }: { refreshKey: number; onBack: () => v
 
 // ------------------------------------------------------------------------- More
 function More({ user, online, pending, go, onSignOut }: { user: User; online: boolean; pending: number; go: (s: Screen) => void; onSignOut: () => void }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   return (
     <div className="stack">
       <h1 className="title">{t("tabMore")}</h1>
       <div className="list-row list-row-bare"><span className="avatar">{user.name.slice(0, 1)}</span><div className="grow"><b>{user.name}</b><span className="sub">{user.organization} · {user.role}</span></div></div>
       <button className="list-row" onClick={() => go("followups")}><Icon name="flag" size={20} /><span className="grow"><b>{t("followUps")}</b></span><Icon name="right" size={18} /></button>
+      <button className="list-row" onClick={() => go("help")}><Icon name="list" size={20} /><span className="grow"><b>{lang === "hinglish" ? "Help aur manual" : "Help & manual"}</b><span className="sub">{lang === "hinglish" ? "Step-by-step guide aur tour" : "Step-by-step guide and tour"}</span></span><Icon name="right" size={18} /></button>
+      <button className="list-row" onClick={() => go("bug")}><Icon name="alert" size={20} /><span className="grow"><b>{lang === "hinglish" ? "Bug report karo" : "Report a bug"}</b><span className="sub">{lang === "hinglish" ? "Kuch galat laga? Humein batao" : "Something wrong? Tell us"}</span></span><Icon name="right" size={18} /></button>
       <div className="list-row list-row-bare"><span className="grow">{t("language")}</span><LangToggle /></div>
       <div className="list-row list-row-bare"><span className="grow">Connection</span><span className={online ? "chip" : "chip-red"}>{online ? "Online" : t("offline")}</span></div>
       <div className="list-row list-row-bare"><span className="grow">Upload queue</span><span className="chip">{pending} {pending === 1 ? "item" : "items"}</span></div>
@@ -196,7 +201,10 @@ function More({ user, online, pending, go, onSignOut }: { user: User; online: bo
 // ------------------------------------------------------------------------- shell
 export function RepApp({ user, online, onSignOut }: { user: User; online: boolean; onSignOut: () => void }) {
   const { t } = useI18n();
-  const [screen, setScreen] = useState<Screen>("today");
+  const [screen, rawSetScreen] = useState<Screen>("today");
+  const [lastWork, setLastWork] = useState<Screen>("today");  // the screen the user was on before opening Help / Report
+  const setScreen = (s: Screen) => { if (!["more", "help", "bug"].includes(s)) setLastWork(s); rawSetScreen(s); };
+  const [tour, setTour] = useState(() => tourUnseen(user.id));
   const [pending, setPending] = useState(0);
   const [language, setLanguage] = useState("hinglish");
   const [uploaded, setUploaded] = useState(0);
@@ -210,7 +218,7 @@ export function RepApp({ user, online, onSignOut }: { user: User; online: boolea
   }, [online]);
 
   const signOut = () => { session.clear(); onSignOut(); };
-  const nav = screen === "followups" ? "more" : screen;
+  const nav = ["followups", "help", "bug"].includes(screen) ? "more" : screen;
 
   if (screen === "log") {
     return (
@@ -223,6 +231,7 @@ export function RepApp({ user, online, onSignOut }: { user: User; online: boolea
 
   return (
     <div className="phone">
+      {tour && <Tour role={user.role} userId={user.id} onClose={() => setTour(false)} />}
       <AppBar online={online} onMenu={() => setScreen("more")} />
       {pending > 0 && <div className="banner">{pending} {t("queued")}{online ? "…" : ""}</div>}
       {uploaded > 0 && online && pending === 0 && <div className="banner banner-ok" onClick={() => setUploaded(0)}>{uploaded} offline recording{uploaded > 1 ? "s" : ""} uploaded — see “{t("waiting")}”.</div>}
@@ -232,6 +241,14 @@ export function RepApp({ user, online, onSignOut }: { user: User; online: boolea
         {screen === "orders" && <Orders refreshKey={refreshKey} />}
         {screen === "followups" && <FollowUps refreshKey={refreshKey} onBack={() => setScreen("more")} />}
         {screen === "more" && <More user={user} online={online} pending={pending} go={setScreen} onSignOut={signOut} />}
+        {screen === "help" && (
+          <div className="stack"><button className="link" onClick={() => setScreen("more")}><Icon name="back" size={16} />{t("tabMore")}</button>
+            <h1 className="title">Help &amp; manual</h1><Manual role={user.role} onTour={() => setTour(true)} onReport={() => setScreen("bug")} /></div>
+        )}
+        {screen === "bug" && (
+          <div className="stack"><button className="link" onClick={() => setScreen("more")}><Icon name="back" size={16} />{t("tabMore")}</button>
+            <h1 className="title">Report a bug</h1><BugReport online={online} page={`rep: ${lastWork}`} /></div>
+        )}
       </main>
       <BottomNav active={nav} onSelect={(id) => setScreen(id as Screen)} center={{ label: t("logVisit"), onClick: () => setScreen("log") }} items={[
         { id: "today", label: t("tabToday"), icon: "home" },

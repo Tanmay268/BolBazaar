@@ -14,7 +14,9 @@ _Q: dict[str, dict[str, str]] = {
         "UNKNOWN_CUSTOMER": "I couldn't find \"{spoken}\". Which retailer did you visit?",
         "AMBIGUOUS_CUSTOMER": "Which retailer did you mean by \"{spoken}\"?",
         "AMBIGUOUS_PRODUCT": "Which product did you mean by \"{spoken}\"?",
-        "UNKNOWN_PRODUCT": "I couldn't find \"{spoken}\" in the catalogue. Which product is it?",
+        "UNKNOWN_PRODUCT": "I couldn't find \"{spoken}\" in the catalogue. Pick the product, or say \"add it\" with its price, e.g. \"add, 60 rupees per kg\".",
+        "NEW_PRODUCT_PRICE": "What is the price of {item}? Say the price in rupees{unit}.",
+        "NEW_PRODUCT_UNIT": "{item} is sold by which unit: kg, packet, bottle or piece?",
         "MISSING_QUANTITY": "How many {item}?",
         "UNIT_MISMATCH": "Which unit for {item}?",
         "MISSING_AMOUNT": "What is the payment amount?",
@@ -25,7 +27,9 @@ _Q: dict[str, dict[str, str]] = {
         "UNKNOWN_CUSTOMER": "\"{spoken}\" nahi mila. Aap kis retailer se mile?",
         "AMBIGUOUS_CUSTOMER": "\"{spoken}\" se aapka matlab kaun sa retailer hai?",
         "AMBIGUOUS_PRODUCT": "\"{spoken}\" se aapka matlab kaun sa product hai?",
-        "UNKNOWN_PRODUCT": "\"{spoken}\" catalogue mein nahi mila. Kaun sa product hai?",
+        "UNKNOWN_PRODUCT": "\"{spoken}\" catalogue mein nahi mila. Product chuniye, ya bolo \"add karo\" aur price, jaise \"add karo, 60 rupaye kilo\".",
+        "NEW_PRODUCT_PRICE": "{item} ka price kitna hai? Rupaye mein bolo{unit}.",
+        "NEW_PRODUCT_UNIT": "{item} kis unit mein bikta hai: kilo, packet, bottle ya piece?",
         "MISSING_QUANTITY": "{item} kitna chahiye?",
         "UNIT_MISMATCH": "{item} ki unit kya hai?",
         "MISSING_AMOUNT": "Payment ki raashi kitni hai?",
@@ -36,7 +40,9 @@ _Q: dict[str, dict[str, str]] = {
         "UNKNOWN_CUSTOMER": "\"{spoken}\" नहीं मिला। आप किस रिटेलर से मिले?",
         "AMBIGUOUS_CUSTOMER": "\"{spoken}\" से आपका मतलब कौन सा रिटेलर है?",
         "AMBIGUOUS_PRODUCT": "\"{spoken}\" से आपका मतलब कौन सा प्रोडक्ट है?",
-        "UNKNOWN_PRODUCT": "\"{spoken}\" कैटलॉग में नहीं मिला। कौन सा प्रोडक्ट है?",
+        "UNKNOWN_PRODUCT": "\"{spoken}\" कैटलॉग में नहीं मिला। प्रोडक्ट चुनें, या बोलें \"add करो\" और कीमत।",
+        "NEW_PRODUCT_PRICE": "{item} की कीमत कितनी है? रुपये में बोलें{unit}.",
+        "NEW_PRODUCT_UNIT": "{item} किस यूनिट में बिकता है: किलो, पैकेट, बोतल या पीस?",
         "MISSING_QUANTITY": "{item} कितना चाहिए?",
         "UNIT_MISMATCH": "{item} की यूनिट क्या है?",
         "MISSING_AMOUNT": "भुगतान की राशि कितनी है?",
@@ -48,6 +54,8 @@ _Q: dict[str, dict[str, str]] = {
         "AMBIGUOUS_CUSTOMER": "\"{spoken}\" என்பதில் எந்த கடை?",
         "AMBIGUOUS_PRODUCT": "\"{spoken}\" என்பதில் எந்த பொருள்?",
         "UNKNOWN_PRODUCT": "\"{spoken}\" பட்டியலில் இல்லை. எந்த பொருள்?",
+        "NEW_PRODUCT_PRICE": "{item} விலை எவ்வளவு?{unit}",
+        "NEW_PRODUCT_UNIT": "{item} எந்த அலகில் விற்கப்படுகிறது?",
         "MISSING_QUANTITY": "{item} எத்தனை வேண்டும்?",
         "UNIT_MISMATCH": "{item}க்கு எந்த அலகு?",
         "MISSING_AMOUNT": "பணத்தின் தொகை எவ்வளவு?",
@@ -59,6 +67,8 @@ _Q: dict[str, dict[str, str]] = {
         "AMBIGUOUS_CUSTOMER": "\"{spoken}\" म्हणजे कोणता दुकानदार?",
         "AMBIGUOUS_PRODUCT": "\"{spoken}\" म्हणजे कोणते उत्पादन?",
         "UNKNOWN_PRODUCT": "\"{spoken}\" यादीत सापडले नाही. कोणते उत्पादन?",
+        "NEW_PRODUCT_PRICE": "{item} ची किंमत किती?{unit}",
+        "NEW_PRODUCT_UNIT": "{item} कोणत्या एककात विकले जाते?",
         "MISSING_QUANTITY": "{item} किती हवे?",
         "UNIT_MISMATCH": "{item} साठी कोणते एकक?",
         "MISSING_AMOUNT": "रक्कम किती आहे?",
@@ -110,7 +120,13 @@ def render_question(language: str, issue: dict[str, Any], draft: dict[str, Any])
         spoken=issue.get("spoken") or "",
         item=issue.get("item") or "",
         what=_what(language, issue),
+        unit=_per(issue),
     )
+
+
+def _per(issue: dict[str, Any]) -> str:
+    """' per kg' when the unit of a new item is already known."""
+    return f" per {issue['unit']}" if issue.get("unit") else ""
 
 
 def _what(language: str, issue: dict[str, Any]) -> str:

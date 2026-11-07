@@ -32,6 +32,17 @@ def hash_password(password: str) -> str:
     return f"pbkdf2${ITERATIONS}${salt}${digest}"
 
 
+_DUMMY_HASH: str | None = None
+
+
+def dummy_hash() -> str:
+    """A real hash with the production cost, so verifying an unknown user takes as long as a wrong password."""
+    global _DUMMY_HASH
+    if _DUMMY_HASH is None:
+        _DUMMY_HASH = hash_password(secrets.token_hex(16))
+    return _DUMMY_HASH
+
+
 def verify_password(password: str, stored: str) -> bool:
     try:
         _, iterations, salt, digest = stored.split("$")
@@ -53,7 +64,8 @@ def create_token(settings: Settings, principal: Principal) -> str:
 
 def decode_token(settings: Settings, token: str) -> Principal:
     try:
-        claims = jwt.decode(token, settings.jwt_key, algorithms=["HS256"])
+        claims = jwt.decode(token, settings.jwt_key, algorithms=["HS256"],
+                            options={"require": ["exp", "iat", "sub", "org", "role"]})
     except jwt.PyJWTError as exc:
         raise ApiError(401, "INVALID_TOKEN", "Sign in again") from exc
     return Principal(claims["sub"], claims["org"], claims["role"], claims.get("ter"), claims.get("name", ""))
