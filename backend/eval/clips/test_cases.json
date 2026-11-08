@@ -1,0 +1,1124 @@
+{
+  "meta": {
+    "version": 1,
+    "purpose": "Spoken test cases for WER (speech) and end-to-end extraction accuracy. 'say' is both the script to read aloud AND the reference transcript.",
+    "run_language_flag": {
+      "hinglish": "--language hinglish",
+      "hi-IN": "--language hi-IN",
+      "en-IN": "--language en-IN"
+    },
+    "audio_format": "WAV, 16 kHz, mono, 16-bit, <= 28 s. One take per case; keep a bad take only if it is really what a rep would do.",
+    "noise_conditions": {
+      "quiet": "closed room",
+      "shop_noise": "play shop/market ambience from a second device at normal volume ~1 m away",
+      "street": "play traffic ambience louder, or record outdoors"
+    },
+    "speakers": "S1..S3 are placeholders; record the real names/ages/gender/accent in recording_sheet.csv, not in this file",
+    "expected_fields": "customer/items/collections/commitments/complaints/delivery use the same shape as backend/eval/cases.json (only present when the case can be scored end-to-end). 'dates are limited to the harness vocabulary: tomorrow, today, next_monday. Action types: visit, call, payment_followup, send_material, stock_followup, other.",
+    "number_words": "Hinglish scripts spell numbers as words on purpose (the STT code-mix output mostly does). Read them as written."
+  },
+  "cases": [
+    {
+      "id": "hg01-order",
+      "language": "hinglish",
+      "category": "order",
+      "difficulty": "easy",
+      "say": "Sharma ji ne bees packet Parle-G liye aur das bottle Real mango kal dena hai.",
+      "speaker": "S1",
+      "noise": "quiet",
+      "mic": "phone",
+      "notes": "",
+      "expected": {
+        "customer": "cus_sharma_gen",
+        "items": [
+          [
+            "prd_parle_g",
+            20
+          ],
+          [
+            "prd_real_mango",
+            10
+          ]
+        ],
+        "delivery": "tomorrow"
+      }
+    },
+    {
+      "id": "hg02-order",
+      "language": "hinglish",
+      "category": "order",
+      "difficulty": "easy",
+      "say": "Khan sahab ko tees packet Lays aur pandrah packet Parle-G chahiye, kal bhej dena.",
+      "speaker": "S2",
+      "noise": "quiet",
+      "mic": "phone",
+      "notes": "",
+      "expected": {
+        "customer": "cus_khan",
+        "items": [
+          [
+            "prd_lays",
+            30
+          ],
+          [
+            "prd_parle_g",
+            15
+          ]
+        ],
+        "delivery": "tomorrow"
+      }
+    },
+    {
+      "id": "hg03-order",
+      "language": "hinglish",
+      "category": "order",
+      "difficulty": "easy",
+      "say": "Verma ji ne paanch packet Tata Salt aur do packet Aashirvaad Atta order kiye.",
+      "speaker": "S3",
+      "noise": "shop_noise",
+      "mic": "laptop",
+      "notes": "Aashirvaad is a classic STT trap",
+      "expected": {
+        "customer": "cus_verma",
+        "items": [
+          [
+            "prd_tata_salt",
+            5
+          ],
+          [
+            "prd_atta",
+            2
+          ]
+        ]
+      }
+    },
+    {
+      "id": "hg04-order",
+      "language": "hinglish",
+      "category": "order",
+      "difficulty": "medium",
+      "say": "Gupta ji ke yahan gaya tha, unhone pachaas packet Good Day aur bees packet Marie Gold mangaye.",
+      "speaker": "S1",
+      "noise": "quiet",
+      "mic": "laptop",
+      "notes": "",
+      "expected": {
+        "customer": "cus_gupta",
+        "items": [
+          [
+            "prd_goodday",
+            50
+          ],
+          [
+            "prd_marie",
+            20
+          ]
+        ]
+      }
+    },
+    {
+      "id": "hg05-order",
+      "language": "hinglish",
+      "category": "order",
+      "difficulty": "medium",
+      "say": "Sharma Dairy ko das packet Amul Butter aur chaar bottle Real guava chahiye.",
+      "speaker": "S2",
+      "noise": "shop_noise",
+      "mic": "phone",
+      "notes": "Customer is Sharma Dairy, NOT Sharma ji",
+      "expected": {
+        "customer": "cus_sharma_dairy",
+        "items": [
+          [
+            "prd_amul_butter",
+            10
+          ],
+          [
+            "prd_real_guava",
+            4
+          ]
+        ]
+      }
+    },
+    {
+      "id": "hg06-order",
+      "language": "hinglish",
+      "category": "order",
+      "difficulty": "medium",
+      "say": "Khan Mini Mart ne ek sau bees packet Parle-G ka order diya hai.",
+      "speaker": "S3",
+      "noise": "street",
+      "mic": "phone",
+      "notes": "ek sau bees = 120",
+      "expected": {
+        "customer": "cus_khan",
+        "items": [
+          [
+            "prd_parle_g",
+            120
+          ]
+        ]
+      }
+    },
+    {
+      "id": "hg07-order",
+      "language": "hinglish",
+      "category": "order",
+      "difficulty": "medium",
+      "say": "Verma ji ko Maaza ki chhe bottle aur Real mixed fruit ki teen bottle de di, parson delivery.",
+      "speaker": "S1",
+      "noise": "quiet",
+      "mic": "laptop",
+      "notes": "Maaza vs Maza spelling",
+      "expected": {
+        "customer": "cus_verma",
+        "items": [
+          [
+            "prd_maaza",
+            6
+          ],
+          [
+            "prd_real_mixed",
+            3
+          ]
+        ]
+      }
+    },
+    {
+      "id": "hg08-order",
+      "language": "hinglish",
+      "category": "order",
+      "difficulty": "hard",
+      "say": "Gupta ji ne saath packet Lays, untalees packet Good Day aur pachchis packet Marie order kiye.",
+      "speaker": "S2",
+      "noise": "quiet",
+      "mic": "laptop",
+      "notes": "Hard numbers: saath = 60 (not saat = 7), untalees = 39, pachchis = 25. Read the words exactly as written",
+      "expected": {
+        "customer": "cus_gupta",
+        "items": [
+          [
+            "prd_lays",
+            60
+          ],
+          [
+            "prd_goodday",
+            39
+          ],
+          [
+            "prd_marie",
+            25
+          ]
+        ]
+      }
+    },
+    {
+      "id": "hg09-collection",
+      "language": "hinglish",
+      "category": "collection",
+      "difficulty": "easy",
+      "say": "Verma ji ne chhe hazaar rupaye de diye.",
+      "speaker": "S3",
+      "noise": "shop_noise",
+      "mic": "phone",
+      "notes": "",
+      "expected": {
+        "customer": "cus_verma",
+        "collections": [
+          [
+            "received",
+            6000
+          ]
+        ]
+      }
+    },
+    {
+      "id": "hg10-collection",
+      "language": "hinglish",
+      "category": "collection",
+      "difficulty": "medium",
+      "say": "Sharma ji se dedh hazaar rupaye mile.",
+      "speaker": "S1",
+      "noise": "quiet",
+      "mic": "phone",
+      "notes": "dedh = 1.5",
+      "expected": {
+        "customer": "cus_sharma_gen",
+        "collections": [
+          [
+            "received",
+            1500
+          ]
+        ]
+      }
+    },
+    {
+      "id": "hg11-collection",
+      "language": "hinglish",
+      "category": "collection",
+      "difficulty": "hard",
+      "say": "Khan sahab ne dhai hazaar rupaye ka payment kal dene ko kaha hai.",
+      "speaker": "S2",
+      "noise": "shop_noise",
+      "mic": "laptop",
+      "notes": "dhai = 2.5",
+      "expected": {
+        "customer": "cus_khan",
+        "collections": [
+          [
+            "promised",
+            2500
+          ]
+        ]
+      }
+    },
+    {
+      "id": "hg12-collection",
+      "language": "hinglish",
+      "category": "collection",
+      "difficulty": "medium",
+      "say": "Gupta ji ke aath hazaar rupaye baaki hain, woh Friday ko denge.",
+      "speaker": "S3",
+      "noise": "street",
+      "mic": "laptop",
+      "notes": "",
+      "expected": {
+        "customer": "cus_gupta",
+        "collections": [
+          [
+            "promised",
+            8000
+          ]
+        ]
+      }
+    },
+    {
+      "id": "hg13-commitment",
+      "language": "hinglish",
+      "category": "commitment",
+      "difficulty": "easy",
+      "say": "Verma ji ko Monday ko dobara visit karna hai.",
+      "speaker": "S1",
+      "noise": "quiet",
+      "mic": "phone",
+      "notes": "",
+      "expected": {
+        "customer": "cus_verma",
+        "commitments": [
+          [
+            "visit",
+            "next_monday"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "hg14-commitment",
+      "language": "hinglish",
+      "category": "commitment",
+      "difficulty": "easy",
+      "say": "Sharma ji ko kal call karna hai payment ke liye.",
+      "speaker": "S2",
+      "noise": "quiet",
+      "mic": "phone",
+      "notes": "",
+      "expected": {
+        "customer": "cus_sharma_gen",
+        "commitments": [
+          [
+            "payment_followup",
+            "tomorrow"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "hg15-commitment",
+      "language": "hinglish",
+      "category": "commitment",
+      "difficulty": "medium",
+      "say": "Khan sahab ko product catalogue bhejna hai, Monday tak.",
+      "speaker": "S3",
+      "noise": "shop_noise",
+      "mic": "laptop",
+      "notes": "",
+      "expected": {
+        "customer": "cus_khan",
+        "commitments": [
+          [
+            "send_material",
+            "next_monday"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "hg16-commitment",
+      "language": "hinglish",
+      "category": "commitment",
+      "difficulty": "medium",
+      "say": "Gupta ji ne bola agle hafte naye scheme ki details chahiye, woh bhejni hain.",
+      "speaker": "S1",
+      "noise": "quiet",
+      "mic": "laptop",
+      "notes": "",
+      "expected": {
+        "customer": "cus_gupta"
+      }
+    },
+    {
+      "id": "hg17-complaint",
+      "language": "hinglish",
+      "category": "complaint",
+      "difficulty": "easy",
+      "say": "Verma ji ko Maaza ki bottles leak ho rahi thi, complaint hai.",
+      "speaker": "S2",
+      "noise": "shop_noise",
+      "mic": "phone",
+      "notes": "",
+      "expected": {
+        "customer": "cus_verma",
+        "complaints": 1
+      }
+    },
+    {
+      "id": "hg18-complaint",
+      "language": "hinglish",
+      "category": "complaint",
+      "difficulty": "medium",
+      "say": "Sharma Dairy ke yahan Amul Butter ke packets pichle hafte late pahunche, woh naraz the.",
+      "speaker": "S3",
+      "noise": "street",
+      "mic": "phone",
+      "notes": "",
+      "expected": {
+        "customer": "cus_sharma_dairy",
+        "complaints": 1
+      }
+    },
+    {
+      "id": "hg19-complaint",
+      "language": "hinglish",
+      "category": "complaint",
+      "difficulty": "medium",
+      "say": "Khan Mini Mart ne bola ki Lays ke kuch packets damaged aaye the, replacement chahiye.",
+      "speaker": "S1",
+      "noise": "quiet",
+      "mic": "laptop",
+      "notes": "",
+      "expected": {
+        "customer": "cus_khan",
+        "complaints": 1
+      }
+    },
+    {
+      "id": "hg20-visit",
+      "language": "hinglish",
+      "category": "visit",
+      "difficulty": "easy",
+      "say": "Gupta ji ke yahan aaj sirf visit kiya, koi order nahi mila.",
+      "speaker": "S2",
+      "noise": "quiet",
+      "mic": "laptop",
+      "notes": "",
+      "expected": {
+        "customer": "cus_gupta"
+      }
+    },
+    {
+      "id": "hg21-mixed-visit",
+      "language": "hinglish",
+      "category": "mixed-visit",
+      "difficulty": "hard",
+      "say": "Sharma Dairy mein aaj gaya, unhone tees bottle Real mixed fruit aur bees packet Amul Butter liye. Do hazaar rupaye mile, baaki parson denge. Butter ke kuch packets pighle hue the, complaint hai. Agle Monday ko phir visit karna hai.",
+      "speaker": "S3",
+      "noise": "shop_noise",
+      "mic": "phone",
+      "notes": "Long ~40-word visit; speak at normal pace in one go, do not pause between sentences",
+      "expected": {
+        "customer": "cus_sharma_dairy",
+        "items": [
+          [
+            "prd_real_mixed",
+            30
+          ],
+          [
+            "prd_amul_butter",
+            20
+          ]
+        ],
+        "collections": [
+          [
+            "received",
+            2000
+          ]
+        ],
+        "complaints": 1,
+        "commitments": [
+          [
+            "visit",
+            "next_monday"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "hg22-mixed-visit",
+      "language": "hinglish",
+      "category": "mixed-visit",
+      "difficulty": "hard",
+      "say": "Verma ji ke yahan gaya tha. Unhone pandrah packet Tata Salt aur chaar bottle Maaza liye, teen hazaar rupaye cash diye, aur kal phir call karne ko bola hai.",
+      "speaker": "S1",
+      "noise": "quiet",
+      "mic": "phone",
+      "notes": "",
+      "expected": {
+        "customer": "cus_verma",
+        "items": [
+          [
+            "prd_tata_salt",
+            15
+          ],
+          [
+            "prd_maaza",
+            4
+          ]
+        ],
+        "collections": [
+          [
+            "received",
+            3000
+          ]
+        ],
+        "commitments": [
+          [
+            "call",
+            "tomorrow"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "hg23-mixed-visit",
+      "language": "hinglish",
+      "category": "mixed-visit",
+      "difficulty": "hard",
+      "say": "Khan sahab ne das packet Amul Butter mangaye, saath hi bola ki pichli baar Good Day ke packets damaged the. Unko Monday ko catalogue bhejna hai.",
+      "speaker": "S2",
+      "noise": "shop_noise",
+      "mic": "laptop",
+      "notes": "",
+      "expected": {
+        "customer": "cus_khan",
+        "items": [
+          [
+            "prd_amul_butter",
+            10
+          ]
+        ],
+        "complaints": 1,
+        "commitments": [
+          [
+            "send_material",
+            "next_monday"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "hg24-mixed-visit",
+      "language": "hinglish",
+      "category": "mixed-visit",
+      "difficulty": "hard",
+      "say": "Gupta ji ne bees packet Lays aur das packet Marie liye, aath hazaar rupaye baaki hain jo woh agle hafte denge, aur Friday ko dobara visit karna hai.",
+      "speaker": "S3",
+      "noise": "street",
+      "mic": "laptop",
+      "notes": "",
+      "expected": {
+        "customer": "cus_gupta",
+        "items": [
+          [
+            "prd_lays",
+            20
+          ],
+          [
+            "prd_marie",
+            10
+          ]
+        ],
+        "collections": [
+          [
+            "promised",
+            8000
+          ]
+        ]
+      }
+    },
+    {
+      "id": "hg25-stress-fast",
+      "language": "hinglish",
+      "category": "stress-fast",
+      "difficulty": "hard",
+      "say": "Gupta ji pachaas Parle-G bees Good Day das Marie kal bhej dena chaar hazaar mile.",
+      "speaker": "S1",
+      "noise": "quiet",
+      "mic": "phone",
+      "notes": "Say it FAST, no pauses",
+      "expected": {
+        "customer": "cus_gupta",
+        "items": [
+          [
+            "prd_parle_g",
+            50
+          ],
+          [
+            "prd_goodday",
+            20
+          ],
+          [
+            "prd_marie",
+            10
+          ]
+        ],
+        "collections": [
+          [
+            "received",
+            4000
+          ]
+        ],
+        "delivery": "tomorrow"
+      }
+    },
+    {
+      "id": "hg26-stress-correction",
+      "language": "hinglish",
+      "category": "stress-correction",
+      "difficulty": "hard",
+      "say": "Khan sahab ko bees packet Lays, nahi nahi, tees packet Lays aur paanch bottle Maaza bhejna.",
+      "speaker": "S2",
+      "noise": "quiet",
+      "mic": "phone",
+      "notes": "Self-correction mid-sentence; correct final qty is 30",
+      "expected": {
+        "customer": "cus_khan",
+        "items": [
+          [
+            "prd_lays",
+            30
+          ],
+          [
+            "prd_maaza",
+            5
+          ]
+        ]
+      }
+    },
+    {
+      "id": "hg27-stress-brands",
+      "language": "hinglish",
+      "category": "stress-brands",
+      "difficulty": "hard",
+      "say": "Verma ji ko do packet Aashirvaad Atta, teen bottle Real guava, paanch packet Lay's aur chhe bottle Maaza chahiye.",
+      "speaker": "S3",
+      "noise": "shop_noise",
+      "mic": "laptop",
+      "notes": "Four tricky brand names in one sentence",
+      "expected": {
+        "customer": "cus_verma",
+        "items": [
+          [
+            "prd_atta",
+            2
+          ],
+          [
+            "prd_real_guava",
+            3
+          ],
+          [
+            "prd_lays",
+            5
+          ],
+          [
+            "prd_maaza",
+            6
+          ]
+        ]
+      }
+    },
+    {
+      "id": "hi01-order",
+      "language": "hi-IN",
+      "category": "order",
+      "difficulty": "easy",
+      "say": "शर्मा जी ने आज दस पैकेट पारले जी लिए और कल दो हज़ार रुपये देंगे।",
+      "speaker": "S1",
+      "noise": "quiet",
+      "mic": "laptop",
+      "notes": "Pure Hindi, Devanagari reference",
+      "expected": {
+        "customer": "cus_sharma_gen",
+        "items": [
+          [
+            "prd_parle_g",
+            10
+          ]
+        ],
+        "collections": [
+          [
+            "promised",
+            2000
+          ]
+        ]
+      }
+    },
+    {
+      "id": "hi02-order",
+      "language": "hi-IN",
+      "category": "order",
+      "difficulty": "easy",
+      "say": "गुप्ता जी को बीस पैकेट गुड डे और दस पैकेट मैरी गोल्ड चाहिए।",
+      "speaker": "S2",
+      "noise": "shop_noise",
+      "mic": "phone",
+      "notes": "",
+      "expected": {
+        "customer": "cus_gupta",
+        "items": [
+          [
+            "prd_goodday",
+            20
+          ],
+          [
+            "prd_marie",
+            10
+          ]
+        ]
+      }
+    },
+    {
+      "id": "hi03-order",
+      "language": "hi-IN",
+      "category": "order",
+      "difficulty": "medium",
+      "say": "खान साहब ने पचास पैकेट लेज़ और पंद्रह बोतल माज़ा का ऑर्डर दिया है।",
+      "speaker": "S3",
+      "noise": "street",
+      "mic": "phone",
+      "notes": "",
+      "expected": {
+        "customer": "cus_khan",
+        "items": [
+          [
+            "prd_lays",
+            50
+          ],
+          [
+            "prd_maaza",
+            15
+          ]
+        ]
+      }
+    },
+    {
+      "id": "hi04-collection",
+      "language": "hi-IN",
+      "category": "collection",
+      "difficulty": "medium",
+      "say": "वर्मा जी ने पाँच हज़ार रुपये नकद दे दिए।",
+      "speaker": "S1",
+      "noise": "quiet",
+      "mic": "laptop",
+      "notes": "",
+      "expected": {
+        "customer": "cus_verma",
+        "collections": [
+          [
+            "received",
+            5000
+          ]
+        ]
+      }
+    },
+    {
+      "id": "hi05-commitment",
+      "language": "hi-IN",
+      "category": "commitment",
+      "difficulty": "easy",
+      "say": "अगले सोमवार को शर्मा जी के यहाँ दोबारा जाना है।",
+      "speaker": "S2",
+      "noise": "quiet",
+      "mic": "laptop",
+      "notes": "",
+      "expected": {
+        "customer": "cus_sharma_gen",
+        "commitments": [
+          [
+            "visit",
+            "next_monday"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "hi06-complaint",
+      "language": "hi-IN",
+      "category": "complaint",
+      "difficulty": "medium",
+      "say": "खान मिनी मार्ट में अमूल बटर के कुछ पैकेट खराब निकले, उनकी शिकायत है।",
+      "speaker": "S3",
+      "noise": "shop_noise",
+      "mic": "phone",
+      "notes": "",
+      "expected": {
+        "customer": "cus_khan",
+        "complaints": 1
+      }
+    },
+    {
+      "id": "hi07-mixed-visit",
+      "language": "hi-IN",
+      "category": "mixed-visit",
+      "difficulty": "hard",
+      "say": "गुप्ता जी ने पच्चीस पैकेट टाटा नमक लिया, तीन हज़ार रुपये मिले और कल फ़ोन करना है।",
+      "speaker": "S1",
+      "noise": "quiet",
+      "mic": "phone",
+      "notes": "",
+      "expected": {
+        "customer": "cus_gupta",
+        "items": [
+          [
+            "prd_tata_salt",
+            25
+          ]
+        ],
+        "collections": [
+          [
+            "received",
+            3000
+          ]
+        ],
+        "commitments": [
+          [
+            "call",
+            "tomorrow"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "hi08-visit",
+      "language": "hi-IN",
+      "category": "visit",
+      "difficulty": "easy",
+      "say": "आज वर्मा जी के यहाँ सिर्फ़ मुलाक़ात की, कोई ऑर्डर नहीं मिला।",
+      "speaker": "S2",
+      "noise": "shop_noise",
+      "mic": "laptop",
+      "notes": "",
+      "expected": {
+        "customer": "cus_verma"
+      }
+    },
+    {
+      "id": "en01-order",
+      "language": "en-IN",
+      "category": "order",
+      "difficulty": "easy",
+      "say": "Visited Sharma General Store today. They ordered twenty packets of Parle-G, please deliver tomorrow.",
+      "speaker": "S3",
+      "noise": "street",
+      "mic": "laptop",
+      "notes": "",
+      "expected": {
+        "customer": "cus_sharma_gen",
+        "items": [
+          [
+            "prd_parle_g",
+            20
+          ]
+        ],
+        "delivery": "tomorrow"
+      }
+    },
+    {
+      "id": "en02-order",
+      "language": "en-IN",
+      "category": "order",
+      "difficulty": "easy",
+      "say": "Gupta ji wants ten packets of Good Day and five packets of Marie Gold.",
+      "speaker": "S1",
+      "noise": "quiet",
+      "mic": "phone",
+      "notes": "",
+      "expected": {
+        "customer": "cus_gupta",
+        "items": [
+          [
+            "prd_goodday",
+            10
+          ],
+          [
+            "prd_marie",
+            5
+          ]
+        ]
+      }
+    },
+    {
+      "id": "en03-order",
+      "language": "en-IN",
+      "category": "order",
+      "difficulty": "medium",
+      "say": "Khan Mini Mart ordered thirty packets of Lay's and twelve bottles of Maaza.",
+      "speaker": "S2",
+      "noise": "quiet",
+      "mic": "phone",
+      "notes": "Lay's / Maaza are brand traps",
+      "expected": {
+        "customer": "cus_khan",
+        "items": [
+          [
+            "prd_lays",
+            30
+          ],
+          [
+            "prd_maaza",
+            12
+          ]
+        ]
+      }
+    },
+    {
+      "id": "en04-order",
+      "language": "en-IN",
+      "category": "order",
+      "difficulty": "medium",
+      "say": "Please send four packets of Aashirvaad Atta and six packets of Tata Salt to Verma Kirana.",
+      "speaker": "S3",
+      "noise": "shop_noise",
+      "mic": "laptop",
+      "notes": "",
+      "expected": {
+        "customer": "cus_verma",
+        "items": [
+          [
+            "prd_atta",
+            4
+          ],
+          [
+            "prd_tata_salt",
+            6
+          ]
+        ]
+      }
+    },
+    {
+      "id": "en05-collection",
+      "language": "en-IN",
+      "category": "collection",
+      "difficulty": "easy",
+      "say": "Verma ji paid six thousand rupees in cash today.",
+      "speaker": "S1",
+      "noise": "quiet",
+      "mic": "laptop",
+      "notes": "",
+      "expected": {
+        "customer": "cus_verma",
+        "collections": [
+          [
+            "received",
+            6000
+          ]
+        ]
+      }
+    },
+    {
+      "id": "en06-collection",
+      "language": "en-IN",
+      "category": "collection",
+      "difficulty": "medium",
+      "say": "Sharma ji promised to pay twelve thousand five hundred rupees by Friday.",
+      "speaker": "S2",
+      "noise": "shop_noise",
+      "mic": "phone",
+      "notes": "",
+      "expected": {
+        "customer": "cus_sharma_gen",
+        "collections": [
+          [
+            "promised",
+            12500
+          ]
+        ]
+      }
+    },
+    {
+      "id": "en07-commitment",
+      "language": "en-IN",
+      "category": "commitment",
+      "difficulty": "easy",
+      "say": "I need to visit Gupta ji again next Monday.",
+      "speaker": "S3",
+      "noise": "street",
+      "mic": "phone",
+      "notes": "",
+      "expected": {
+        "customer": "cus_gupta",
+        "commitments": [
+          [
+            "visit",
+            "next_monday"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "en08-commitment",
+      "language": "en-IN",
+      "category": "commitment",
+      "difficulty": "medium",
+      "say": "Call Khan sahab tomorrow about the pending payment and send him the new price list.",
+      "speaker": "S1",
+      "noise": "quiet",
+      "mic": "laptop",
+      "notes": "",
+      "expected": {
+        "customer": "cus_khan",
+        "commitments": [
+          [
+            "payment_followup",
+            "tomorrow"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "en09-complaint",
+      "language": "en-IN",
+      "category": "complaint",
+      "difficulty": "medium",
+      "say": "Sharma Dairy complained that the Amul Butter packets arrived late and a few were damaged.",
+      "speaker": "S2",
+      "noise": "quiet",
+      "mic": "laptop",
+      "notes": "",
+      "expected": {
+        "customer": "cus_sharma_dairy",
+        "complaints": 1
+      }
+    },
+    {
+      "id": "en10-mixed-visit",
+      "language": "en-IN",
+      "category": "mixed-visit",
+      "difficulty": "hard",
+      "say": "Met Verma ji this morning. He ordered fifteen packets of Parle-G, paid two thousand rupees, and wants a callback tomorrow.",
+      "speaker": "S3",
+      "noise": "shop_noise",
+      "mic": "phone",
+      "notes": "",
+      "expected": {
+        "customer": "cus_verma",
+        "items": [
+          [
+            "prd_parle_g",
+            15
+          ]
+        ],
+        "collections": [
+          [
+            "received",
+            2000
+          ]
+        ],
+        "commitments": [
+          [
+            "call",
+            "tomorrow"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "en11-stress-correction",
+      "language": "en-IN",
+      "category": "stress-correction",
+      "difficulty": "hard",
+      "say": "Gupta ji wants twenty packets of Lay's, sorry, thirty packets of Lay's, and ten of Marie Gold.",
+      "speaker": "S1",
+      "noise": "quiet",
+      "mic": "phone",
+      "notes": "Speaker self-corrects mid-sentence; correct final qty is 30",
+      "expected": {
+        "customer": "cus_gupta",
+        "items": [
+          [
+            "prd_lays",
+            30
+          ],
+          [
+            "prd_marie",
+            10
+          ]
+        ]
+      }
+    },
+    {
+      "id": "en12-stress-fast",
+      "language": "en-IN",
+      "category": "stress-fast",
+      "difficulty": "hard",
+      "say": "Khan sahab fifty Parle-G twenty Good Day ten Marie deliver tomorrow morning paid four thousand.",
+      "speaker": "S2",
+      "noise": "shop_noise",
+      "mic": "laptop",
+      "notes": "Say it FAST, no pauses, no punctuation",
+      "expected": {
+        "customer": "cus_khan",
+        "items": [
+          [
+            "prd_parle_g",
+            50
+          ],
+          [
+            "prd_goodday",
+            20
+          ],
+          [
+            "prd_marie",
+            10
+          ]
+        ],
+        "collections": [
+          [
+            "received",
+            4000
+          ]
+        ],
+        "delivery": "tomorrow"
+      }
+    },
+    {
+      "id": "en13-stress-soft",
+      "language": "en-IN",
+      "category": "stress-soft",
+      "difficulty": "medium",
+      "say": "Sharma ji ordered ten packets of Tata Salt.",
+      "speaker": "S3",
+      "noise": "street",
+      "mic": "laptop",
+      "notes": "Say it quietly, as if in a busy shop speaking close to the mic",
+      "expected": {
+        "customer": "cus_sharma_gen",
+        "items": [
+          [
+            "prd_tata_salt",
+            10
+          ]
+        ]
+      }
+    }
+  ]
+}

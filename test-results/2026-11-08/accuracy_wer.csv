@@ -1,0 +1,11 @@
+﻿id,language,noise,mic,speaker,category,difficulty,wer,ref_words,comparable,stt_seconds,ref,hyp
+hg01-order,hinglish,quiet,phone,S1,order,easy,0.6875,16,False,1.23,Sharma ji ne bees packet Parle-G liye aur das bottle Real mango kal dena hai.,शर्मा जी ने बीस packet Parle-G लिए और दस bottle Real Mango के कल लेना है।
+hg09-collection,hinglish,shop_noise,phone,S3,collection,easy,1.0,8,False,0.32,Verma ji ne chhe hazaar rupaye de diye.,वर्मा जी ने छह हज़ार रुपये दे दिए।
+hg13-commitment,hinglish,quiet,phone,S1,commitment,easy,0.7778,9,False,0.28,Verma ji ko Monday ko dobara visit karna hai.,वर्मा जी को Monday को दोबारा visit करना है।
+hg17-complaint,hinglish,shop_noise,phone,S2,complaint,easy,0.75,12,False,0.32,"Verma ji ko Maaza ki bottles leak ho rahi thi, complaint hai.","वर्मा जी को माज़ा की bottles leak हो रही थी, complaint है।"
+hg20-visit,hinglish,quiet,laptop,S2,visit,easy,0.8333,12,False,0.29,"Gupta ji ke yahan aaj sirf visit kiya, koi order nahi mila.","गुप्ता जी के यहाँ आज सिर्फ visit किया, कोई order नहीं मिला।"
+hi01-order,hi-IN,quiet,laptop,S1,order,easy,0.4667,15,False,0.5,शर्मा जी ने आज दस पैकेट पारले जी लिए और कल दो हज़ार रुपये देंगे।,शर्मा जी ने आज 10 packet Parle-G लिए और कल 2000 रुपए देंगे।
+hi05-commitment,hi-IN,quiet,laptop,S2,commitment,easy,0.0,10,True,0.32,अगले सोमवार को शर्मा जी के यहाँ दोबारा जाना है।,अगले सोमवार को शर्मा जी के यहाँ दोबारा जाना है।
+en01-order,en-IN,street,laptop,S3,order,easy,0.0667,15,False,0.33,"Visited Sharma General Store today. They ordered twenty packets of Parle-G, please deliver tomorrow.","Visited Sharma General Store today. They ordered 20 packets of Parle-G, please deliver tomorrow."
+en05-collection,en-IN,quiet,laptop,S1,collection,easy,0.4444,9,False,0.31,Verma ji paid six thousand rupees in cash today.,"Varmaji paid 6,000 rupees in cash today."
+en07-commitment,en-IN,street,phone,S3,commitment,easy,0.0,9,True,0.24,I need to visit Gupta ji again next Monday.,I need to visit Gupta ji again next Monday.

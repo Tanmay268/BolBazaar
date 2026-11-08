@@ -1,0 +1,11 @@
+﻿id,language,noise,mic,speaker,category,difficulty,extractor,pass,n_checks,failed_checks,hyp,weight
+hg01-order,hinglish,quiet,phone,S1,order,easy,offline-baseline,False,4,"items, delivery_date",शर्मा जी ने बीस packet Parle-G लिए और दस bottle Real Mango के कल लेना है।,1
+hg09-collection,hinglish,shop_noise,phone,S3,collection,easy,offline-baseline,False,3,"customer, money, no_open_questions",वर्मा जी ने छह हज़ार रुपये दे दिए।,1
+hg13-commitment,hinglish,quiet,phone,S1,commitment,easy,offline-baseline,False,3,"customer, commitments, no_open_questions",वर्मा जी को Monday को दोबारा visit करना है।,1
+hg17-complaint,hinglish,shop_noise,phone,S2,complaint,easy,offline-baseline,False,3,"customer, no_open_questions","वर्मा जी को माज़ा की bottles leak हो रही थी, complaint है।",1
+hg20-visit,hinglish,quiet,laptop,S2,visit,easy,offline-baseline,False,2,"customer, no_open_questions","गुप्ता जी के यहाँ आज सिर्फ visit किया, कोई order नहीं मिला।",1
+hi01-order,hi-IN,quiet,laptop,S1,order,easy,offline-baseline,False,4,money,शर्मा जी ने आज 10 packet Parle-G लिए और कल 2000 रुपए देंगे।,1
+hi05-commitment,hi-IN,quiet,laptop,S2,commitment,easy,offline-baseline,False,3,commitments,अगले सोमवार को शर्मा जी के यहाँ दोबारा जाना है।,1
+en01-order,en-IN,street,laptop,S3,order,easy,offline-baseline,True,4,,"Visited Sharma General Store today. They ordered 20 packets of Parle-G, please deliver tomorrow.",1
+en05-collection,en-IN,quiet,laptop,S1,collection,easy,offline-baseline,False,3,"customer, no_open_questions","Varmaji paid 6,000 rupees in cash today.",1
+en07-commitment,en-IN,street,phone,S3,commitment,easy,offline-baseline,False,3,commitments,I need to visit Gupta ji again next Monday.,1

@@ -10,8 +10,9 @@ from dataclasses import dataclass, field
 
 from rapidfuzz import fuzz
 
-from .normalize import normalize
+from .normalize import normalize, phonetic_key
 
+SOUND_WEIGHT = 0.8  # 100 * 0.8 = 80 < RESOLVE_AT, so a sound-alike alone is always ambiguous (a question), never accepted
 RESOLVE_AT = 85
 MARGIN = 8
 CONSIDER_AT = 55
@@ -42,7 +43,7 @@ class Resolution:
     candidates: list[Candidate] = field(default_factory=list)
 
 
-def _score(query: str, entry: Entry) -> int:
+def _score(query: str, entry: Entry, sound: str = "") -> int:
     best = 0
     for name in entry.names:
         n = normalize(name)
@@ -52,6 +53,12 @@ def _score(query: str, entry: Entry) -> int:
             return 100
         score = min(PARTIAL_CAP, int(max(fuzz.token_set_ratio(query, n), fuzz.ratio(query, n))))
         best = max(best, score)
+        if sound:
+            # Same name written in another script or spelled differently ("मैरी गोल्ड", "Merry Gold" vs "Marie Gold").
+            # Scaled so it can reach "did you mean...?" but never RESOLVE_AT: a sound-alike is a suggestion, not a match.
+            other = phonetic_key(n)
+            if other:
+                best = max(best, int(SOUND_WEIGHT * max(fuzz.token_set_ratio(sound, other), fuzz.ratio(sound, other))))
     return best
 
 
@@ -59,7 +66,8 @@ def resolve(spoken: str | None, entries: list[Entry]) -> Resolution:
     query = normalize(spoken)
     if not query or not entries:
         return Resolution("unknown", None, [])
-    scored = sorted(((_score(query, e), e) for e in entries), key=lambda x: (-x[0], x[1].name))
+    sound = phonetic_key(query)
+    scored = sorted(((_score(query, e, sound), e) for e in entries), key=lambda x: (-x[0], x[1].name))
     top = scored[0][0]
     suggestions = [Candidate(e.id, e.name, s) for s, e in scored[:6]]
     if top < CONSIDER_AT:

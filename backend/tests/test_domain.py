@@ -71,6 +71,39 @@ def test_exact_alias_wins_and_partial_ties_are_ambiguous():
     assert resolve("xyzzy plugh", cat.product_entries).status == "unknown"
 
 
+@pytest.mark.parametrize("spoken,product_id", [
+    ("Merry Gold", "prd_marie"),            # misheard spelling
+    ("मैरी गोल्ड", "prd_marie"),              # same brand written in Devanagari, no such alias in the catalogue
+    ("माज़ा", "prd_maaza"),
+    ("अमूल बटर", "prd_amul_butter"),
+    ("आशीर्वाद आटा", "prd_atta"),
+])
+def test_sound_alike_spellings_become_a_did_you_mean_never_a_silent_match(spoken, product_id):
+    res = resolve(spoken, demo_catalog(TODAY).product_entries)
+    assert res.status == "ambiguous", "a sound-alike must be confirmed by the rep, not accepted silently"
+    assert res.candidates[0].id == product_id
+
+
+def test_sound_alike_matching_does_not_suggest_unrelated_products_or_weaken_exact_matches():
+    cat = demo_catalog(TODAY)
+    assert resolve("Good Day", cat.product_entries).best.id == "prd_goodday"        # exact alias still wins outright
+    assert resolve("गुड डे", cat.product_entries).best.id == "prd_goodday"          # explicit Devanagari alias still wins
+    assert resolve("Marie Gold", cat.product_entries).best.id == "prd_marie"
+    near = resolve("मैरी गोल्ड", cat.product_entries)
+    assert "prd_goodday" not in {c.id for c in near.candidates}
+    assert resolve("कोई नई चीज़ नमकीन", cat.product_entries).status == "unknown"
+
+
+def test_unknown_and_sound_alike_items_offer_a_suggestion_and_add_as_new():
+    cat = demo_catalog(TODAY)
+    draft = build_draft(OfflineReasoner().extract("Gupta ji ko 20 packet Good Day aur 10 packet Merry Gold chahiye", context(cat)), cat)
+    issues = validate(draft, cat)
+    merry = next(i for i in issues if i.get("spoken", "").lower().startswith("merry"))
+    labels = [o["label"] for o in merry["options"]]
+    assert any("Marie Gold" in label for label in labels), labels            # "did you mean" candidate
+    assert any(label.startswith("+ Add") for label in labels), labels        # and the option to add it as a new item
+
+
 def test_offline_demo_transcript_becomes_draft_with_one_ambiguity():
     cat = demo_catalog(TODAY)
     ex = OfflineReasoner().extract(DEMO_TRANSCRIPTS["hinglish"], context(cat))
