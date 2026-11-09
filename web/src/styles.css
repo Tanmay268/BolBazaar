@@ -234,6 +234,42 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; } td.wid
   .mgr-grid { grid-template-columns: 1.05fr 1.1fr .85fr; align-items: start; }
 }
 @media (min-width: 900px) and (max-width: 1240px) { .mgr-grid { grid-template-columns: 1fr 1fr; } .mpanel-heat { grid-column: 1 / -1; } }
+
+/* ---------- desktop / laptop polish ---------- */
+@media (min-width: 900px) {
+  /* Landing: two columns (brand + how it works | sign-in card) instead of a phone-width strip */
+  .landing { max-width: 1160px; grid-template-columns: minmax(0, 1fr) minmax(360px, 480px); column-gap: 72px; row-gap: 0; align-content: center; align-items: center; padding: 36px 48px 48px; }
+  .landing-top { grid-column: 1 / -1; align-self: start; margin-bottom: 8px; }
+  .landing-hero { gap: 20px; }
+  .lockup h1 { font-size: clamp(4.6rem, 6.4vw, 6.4rem); }
+  .landing-tag { font-size: 1.35rem; max-width: 26ch; }
+  .landing-art { max-width: 300px; margin: 0 0 0 auto; }
+  .how { max-width: 440px; }
+  .signin { padding: 32px; gap: 18px; box-shadow: 10px 10px 0 var(--red); }
+  .signin h2 { font-size: 1.8rem; }
+  .has-apk .landing { padding-bottom: 48px; }
+
+  /* Rep phone app: keep the device frame but make it a comfortable, centred size on tall/short laptop screens */
+  .phone { height: min(calc(100dvh - 48px), 900px); margin: 24px auto; max-width: 440px; }
+
+  /* Manager workspace: cap line length on big monitors and keep the sidebar fixed while the page scrolls */
+  .mgr-page { max-width: 1480px; width: 100%; margin: 0 auto; }
+  .side { align-self: start; }
+  .mgr-head h1 { font-size: clamp(2.4rem, 3.2vw, 3.2rem); }
+  table { font-size: .95rem; }
+  td.wide { min-width: 280px; }
+}
+@media (min-width: 1500px) {
+  .mgr { grid-template-columns: 270px 1fr; }
+  .mgr-page { padding: 36px 56px 64px; }
+}
+/* short laptop screens (e.g. 1366x768): tighten the landing so the sign-in card isn't cut off */
+@media (min-width: 900px) and (max-height: 800px) {
+  .landing { align-content: start; padding-top: 24px; }
+  .lockup h1 { font-size: clamp(4.2rem, 6vw, 5.4rem); }
+  .landing-art { max-width: 210px; }
+  .signin { padding: 24px; gap: 14px; }
+}
 @media (max-width: 380px) { .kpi-red b { font-size: 4.6rem; } .home-art { right: -70px; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
 .is-opening .vorb-btn { transform: scale(.96); animation: pulse 1s ease-in-out infinite; } @keyframes pulse { 50% { box-shadow: 0 0 0 14px rgba(215,40,47,.18); } }

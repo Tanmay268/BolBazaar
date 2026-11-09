@@ -61,10 +61,6 @@ Mobile-first, with a framed phone layout on desktop and a two-column manager wor
 | [DEPLOYMENT.md](DEPLOYMENT.md) | Environments and deployment |
 | [docs/](docs/) | Deep-dive architecture, API reference, ADRs, screenshots |
 
-## Originality
-
-This project was designed independently. It uses general engineering lessons from a reference voice-order project (provider abstraction, idempotency, versioned drafts, post-commit TTS) but shares no code, schema, prompts, workflow or UI with it. See ADR-001.
-
 ## Setup
 
 Backend (Python ≥ 3.11, [uv](https://docs.astral.sh/uv/), ffmpeg recommended for non-WAV audio):

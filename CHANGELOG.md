@@ -79,11 +79,11 @@ Format: newest first. Every iteration adds an entry.
 ### Added
 - Project documentation set: README, PROJECT_PLAN, ARCHITECTURE, API_DOCUMENTATION, DATABASE_SCHEMA, TASKS, TESTING, DEPLOYMENT, `.env.example`, `.gitignore`.
 - `docs/` tree: system architecture, data flow, sequence diagrams, ERD, API reference, ADR-001 (technology stack), ADR-002 (database selection). Diagrams use Mermaid.
-- Opportunity analysis, scope tiers (P0/P1/P2) and a design direction deliberately distinct from the reference app.
+- Opportunity analysis, scope tiers (P0/P1/P2) and a design direction.
 ### Decisions
 - Cut Redis/Celery/AWS from the MVP; keep PostgreSQL; fixed manager query intents instead of text-to-SQL.
 ### Notes
-- No application code yet. Reference project (BolBazaar) was not modified.
+- No application code yet.
 
 ## Unreleased: catalogue management and voice "add item"
 

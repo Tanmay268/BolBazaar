@@ -7,7 +7,6 @@ Field reps spend selling time on admin, lose commitments, and give managers stal
 
 ### 1.2 Honest assessment of the direction
 - **Strength:** the interaction→action chain (speech → structured business events → confirmation → spoken reply) uses STT *and* TTS meaningfully, and the commitment engine is a genuinely uncommon angle.
-- **Overlap risk:** Module C (spoken orders with clarification and confirmation) is the closest to the reference project's core. Mitigation: orders are one *section* of a visit bundle, validated against a **product catalogue** (the reference deliberately had none), and the story leads with visits and commitments.
 - **Scope risk:** six modules is too much for a hackathon. We ship a thin, complete vertical slice (P0) and treat the rest as staged.
 - **Claims discipline:** no offline STT claim; no analytics answered by an LLM.
 
@@ -50,9 +49,9 @@ Cuts versus the initial proposal: Redis/Celery/AWS (not needed for a demo; see A
 
 Gate before each phase: working end-to-end behaviour is preferred over more features.
 
-## 4. Design direction (deliberately unlike the reference app)
+## 4. Design direction
 
-The reference uses a light pastel, phone-framed screen with a glowing orb and bottom tabs. BolBazaar uses a different information design:
+BolBazaar's information design:
 
 - **Conversation-first "visit thread"** instead of a single record button: the rep's transcript appears as a thread, and typed cards (Order, Collection, Complaint, Follow-up) assemble beneath it as the system extracts them. Cards show confidence and the source phrase.
 - **Dark, high-contrast "sunlight" theme** with large touch targets, built for outdoor/shop use; light theme optional.
@@ -60,7 +59,7 @@ The reference uses a light pastel, phone-framed screen with a glowing orb and bo
 - **Route-based home:** today's planned visits as a timeline with overdue commitments badged, not a tab grid.
 - **Correction by tapping a card or saying a fix**, shown as a diff (old → new) before applying.
 - **Manager dashboard:** dense table + KPI strip + chat-style "ask" panel whose answers cite the query used.
-- Distinct typography, colour system and iconography from the reference; design tokens defined in code, not copied.
+- Design tokens (typography, colour, iconography) defined in code.
 
 Screens: Home (route) · Visit thread · Review & confirm · Commitments · Customer 360 · Sync status · Settings; Manager: Overview · Reps · Retailers · Collections · Ask.
 

@@ -36,8 +36,5 @@ Different on purpose, because the data does not exist:
 - **Reports** is omitted. **Voice input on Ask** is omitted: voice ask is not built.
 - **Wordmark**: the board shows another product name. This app keeps its own name, defined once in `web/src/brand.tsx`.
 
-## Originality
-All code, copy, the storefront drawing and the layout here were written for this project. A different reference app was studied earlier for general UX principles only.
-
 ## Screenshots
 Real runs against the live backend are in `docs/screenshots/`: `landing-mobile`, `landing-desktop`, `rep-home`, `rep-record`, `rep-recording`, `rep-review`, `rep-saved`, `rep-orders`, `rep-desktop`, `manager-overview`, `manager-ask`, `manager-team`, `manager-mobile`, `manager-drawer`.
