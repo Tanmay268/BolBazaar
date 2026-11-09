@@ -1,0 +1,34 @@
+{
+  "name": "bolbazaar-demo-studio",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "demo:check": "tsx scripts/preflight.ts",
+    "demo:voice": "tsx scripts/generate-voice.ts",
+    "demo:record": "tsx scripts/record-demo.ts",
+    "demo:render": "tsx scripts/generate-video.ts",
+    "demo:validate": "tsx scripts/validate-output.ts",
+    "demo:all": "tsx scripts/run-demo.ts",
+    "demo:cleanup": "tsx scripts/cleanup.ts",
+    "studio": "remotion studio remotion/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@remotion/bundler": "^4.0.541",
+    "@remotion/cli": "^4.0.541",
+    "@remotion/renderer": "^4.0.541",
+    "dotenv": "^18.0.9",
+    "msedge-tts": "^2.1.1",
+    "playwright": "^1.65.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "remotion": "^4.0.541"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@types/react": "^18.3.31",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  }
+}

@@ -1,0 +1,14 @@
+node_modules/
+.env
+.runtime/
+recordings/
+artifacts/
+assets/generated-voice/
+assets/subtitles/
+assets/music/*.wav
+fixtures/*.wav
+*.wav
+*.webm
+*.mp4
+*.bak
+*.log

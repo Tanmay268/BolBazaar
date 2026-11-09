@@ -26,13 +26,32 @@ build/
 **/android/app/src/main/assets/public/
 
 # Data and media
-data/
+/backend/data/
 *.wav
 *.m4a
 *.aac
 *.webm
+*.mp3
+*.mp4
+*.db
+*.sqlite3
+
+# Test / coverage / eval artifacts
+.coverage
+htmlcov/
+coverage/
+backend/eval/clips/recordings/*_cache.json
+test-results/lighthouse/
+test-results/*/evidence/
+lh-run*.json
+
+# Logs / backups / build info
+*.log
+*.bak
+*.tsbuildinfo
 
 # Editors / OS
+.claude/
 .idea/
 .vscode/
 .DS_Store
